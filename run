@@ -1,0 +1,17 @@
+#!/bin/bash
+
+log_folder=/tmp/log
+run_folder=/tmp/run
+ssl_enable=
+ssl_port=4242
+
+if [[ ! -d $log_folder ]]; then
+    mkdir "$log_folder"
+fi
+
+if [[ ! -d $run_folder ]]; then
+    mkdir "$run_folder"
+fi
+
+./runner.py $ssl_enable --port $ssl_port --logfile "$log_folder/collector.log" -P "$run_folder/collector.pid" --dedup-interval 0 -H 172.16.210.50 "$@"
+
