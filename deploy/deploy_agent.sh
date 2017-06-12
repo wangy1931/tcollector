@@ -51,9 +51,11 @@ function get_os() {
 	distribution=$(lsb_release -d 2>/dev/null | grep -Eo $known_distribution  || grep -Eo $known_distribution /etc/issue 2>/dev/null || uname -s)
 	if [ $distribution = "Darwin" ]; then
 			OS="Darwin"
-	elif [ -f /etc/debian_version -o "$distribution" == "Debian" -o "$distribution" == "Ubuntu" ]; then
+	elif [ -f /etc/debian_version -o "$distribution" == "Debian" ]; then
 			OS="Debian"
-	elif [ -f /etc/redhat-release -o "$distribution" == "RedHat" -o "$distribution" == "CentOS" -o "$distribution" == "openSUSE" -o "$distribution" == "Amazon" ]; then
+	elif [ -f /etc/debian_version -o "$distribution" == "Ubuntu" ]; then
+			OS="Ubuntu"
+    elif [ -f /etc/redhat-release -o "$distribution" == "RedHat" -o "$distribution" == "CentOS" -o "$distribution" == "openSUSE" -o "$distribution" == "Amazon" ]; then
 			OS="RedHat"
 	# Some newer distros like Amazon may not have a redhat-release file
 	elif [ -f /etc/system-release -o "$distribution" == "Amazon" ]; then
@@ -201,7 +203,7 @@ log_info "copy cloudwiz scripts to init.d"
 mv -f "${agent_install_folder}/startup_scripts/${OS}/${agent_startup_scripts}" /etc/init.d/
 abort_if_failed "failed to mv ${agent_install_folder}/startup_scripts/${OS}/${agent_startup_scripts} to /etc/init.d"
 log_info "install the scripts..."
-if [ $OS = "Debian" ]; then
+if [ $OS = "Debian" -o $OS = "Ubuntu" ]; then
   update-rc.d -f ${agent_startup_scripts} remove
   abort_if_failed "failed to unlink the startup scripts"
   update-rc.d ${agent_startup_scripts} defaults
