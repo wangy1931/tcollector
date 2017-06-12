@@ -55,6 +55,8 @@ function get_os() {
 			OS="Debian"
 	elif [ -f /etc/debian_version -o "$distribution" == "Ubuntu" ]; then
 			OS="Ubuntu"
+    elif [ -f /etc/redhat-release -o "$distribution" == "RedHat" -o "$distribution" == "CentOS" -o "$distribution" == "openSUSE" -o "$distribution" == "Amazon" ]; then
+-			OS="RedHat"
 	# Some newer distros like Amazon may not have a redhat-release file
 	elif [ -f /etc/system-release -o "$distribution" == "Amazon" ]; then
 			OS="RedHat"
