@@ -35,7 +35,7 @@ class Ntp(CollectorBase):
         except OSError, e:
             if e.errno == errno.ENOENT:
                 self._readq.nput("ntp.state %d %s" % (self.ts, "1"))
-                self.log_error("ntpd is error datestamp:%d"%self.ts)
+                self.log_error("ntpd is error datestamp:%d,message is "%(self.ts,e.message))
             raise
         stdout, _ = self.ntp_proc.communicate()
         words = stdout.split(',')
@@ -46,6 +46,10 @@ class Ntp(CollectorBase):
             if 'offset' in word:
                 self.offset=word.split()[1]
                 return True
+
+    def cleanup(self):
+        self.log_info('Ntp stop subprocess %d', self.p_top.pid)
+        self.stop_subprocess(self.ntp_proc, __name__)
 
 def test():
     ts = time.time()
