@@ -19,7 +19,7 @@ import socket
 import time
 
 try:
-    import MySQLdb
+    import pymysql as MySQLdb
 except ImportError:
     MySQLdb = None  # This is handled gracefully in main()
 
