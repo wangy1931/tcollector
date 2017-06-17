@@ -1,7 +1,6 @@
 #!/bin/bash
-source common.sh
-
 basedir=$(cd $(dirname $0); pwd)
+source ${basedir}/common.sh
 agent_folder_name="agent"
 workspace_folder="${basedir}/workspace"
 agent_install_folder="/opt/cloudwiz-agent"
