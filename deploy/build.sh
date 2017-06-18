@@ -1,7 +1,6 @@
 #!/bin/bash
-source common.sh
-
 basedir=$(cd $(dirname $0); pwd)
+source ${basedir}/common.sh
 agent_folder_name="agent"
 workspace_folder="${basedir}/workspace"
 agent_install_folder="/opt/cloudwiz-agent"
@@ -170,6 +169,21 @@ if [[ ! "$skip" = true ]]; then
   abort_if_failed 'failed to install meld3'
   popd
   log_info 'finish setting up meld3'
+
+  log_info "set up pymysql ..."
+   if [[ ! -f ${workspace_folder}/PyMySQL-0.7.11.tar.gz ]]; then
+    log_info 'download meld3-0.6.5 tarball'
+    wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/PyMySQL-0.7.11.tar.gz
+    abort_if_failed 'failed to download PyMySQL-0.7.11 tarball'
+  fi
+  tar -xzf "${workspace_folder}"/PyMySQL-0.7.11.tar.gz -C "${workspace_folder}"
+  abort_if_failed 'failed to extract PyMySQL-0.7.11 tarball'
+
+  pushd "${workspace_folder}"/PyMySQL-0.7.11
+  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
+  abort_if_failed 'failed to install PyMySQL-0.7.11'
+  popd
+  log_info "finish setting up pymysql ..."
 
   log_info 'set up elementtree ...'
   if [[ ! -f ${workspace_folder}/elementtree-1.2.6-20050316.tar.gz ]]; then
