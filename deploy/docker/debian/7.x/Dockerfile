@@ -1,13 +1,15 @@
-FROM ubuntu:14.04
+FROM debian:7
 
 MAINTAINER Yongtao You <yongtao.you@cloudwiz.cn>
 
 # Install necessary packages
-RUN apt-get clean && apt-get update -y && apt-get install -y \
+RUN apt-get update -y && apt-get install -y \
+    curl \
     gcc \
-    git \
+    git-core \
     make \
     openssh-client \
+    sudo \
     wget \
     zlib1g-dev
 
