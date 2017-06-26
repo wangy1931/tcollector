@@ -4,7 +4,6 @@ source common.sh
 OS=$(get_os)
 version=$1
 pushd /root/src/tcollector/deploy
-git pull
 sudo ./build.sh -h /root/src/tcollector/
 popd
 
