@@ -1,8 +1,8 @@
 #!/bin/bash
 current_time=$(date "+%Y.%m.%d-%H.%M.%S")
 source common.sh
-OS=$1
-version=$2
+OS=$(get_os)
+version=$1
 pushd /root/src/tcollector/deploy
 git pull
 sudo ./build.sh -h /root/src/tcollector/
