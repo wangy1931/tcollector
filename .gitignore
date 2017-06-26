@@ -10,3 +10,4 @@ debian/tcollector/
 *.pid
 *.log
 .DS_Store
+.idea/*
