@@ -1,6 +1,6 @@
 #!/bin/bash
 
-images=$(docker images | grep "^<none>" | awk "{print $3}")
+images=$(docker images | grep "^<none>" | awk '{print $3}')
 
 if [ "_$images" != "_" ]; then
     docker rmi $images
