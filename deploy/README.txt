@@ -1,7 +1,7 @@
 To build:
 
-$ sudo ./release.sh OS version
-例子：sudo ./release.sh RedHat centos6.6
+$ sudo ./release.sh  version
+例子：sudo ./release.sh  centos6.6
 
 To deploy:
 
