@@ -22,15 +22,18 @@ function log_info() {
   printf "${color_blue}$1.${color_normal}\n"
 }
 
+
 function get_os() {
 	# OS/Distro Detection
 	# Try lsb_release, fallback with /etc/issue then uname command
 	known_distribution="(Debian|Ubuntu|RedHat|CentOS|openSUSE|Amazon)"
-	distribution=$(lsb_release -d 2>/dev/null | grep -Eo $known_distribution  || grep -Eo $known_distribution /etc/issue 2>/dev/null || uname -s)
+	distribution=$( lsb_release -d 2>/dev/null | grep -Eo $known_distribution  || grep -Eo $known_distribution /etc/issue 2>/dev/null || uname -s )
 	if [ $distribution = "Darwin" ]; then
 			OS="Darwin"
-	elif [ -f /etc/debian_version -o "$distribution" == "Debian" -o "$distribution" == "Ubuntu" ]; then
+	elif [ -f /etc/debian_version -o "$distribution" == "Debian"  ]; then
 			OS="Debian"
+	elif [ -f /etc/debian_version -o  "$distribution" == "Ubuntu" ]; then
+	        OS="Ubuntu"
 	elif [ -f /etc/redhat-release -o "$distribution" == "RedHat" -o "$distribution" == "CentOS" -o "$distribution" == "openSUSE" -o "$distribution" == "Amazon" ]; then
 			OS="RedHat"
 	# Some newer distros like Amazon may not have a redhat-release file
