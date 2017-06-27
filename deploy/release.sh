@@ -1,4 +1,5 @@
 #!/bin/bash
+cd $(dirname $0)
 current_time=$(date "+%Y.%m.%d-%H.%M.%S")
 source common.sh
 OS=$(get_os)
