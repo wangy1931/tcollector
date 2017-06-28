@@ -26,7 +26,6 @@ from subprocess import Popen, PIPE, CalledProcessError
 import re
 from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
-import commands
 
 class Zookeeper(CollectorBase):
     def __init__(self, config, logger, readq):
