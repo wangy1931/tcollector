@@ -48,7 +48,9 @@ class Zookeeper(CollectorBase):
             "zk_server_state",
             "zk_followers",
             "zk_synced_followers",
-            "zk_pending_syncs"
+            "zk_pending_syncs",
+            "zk_version",
+            "zk_max_file_descriptor_count"
         ])
         self.scan_interval = int(self.get_config("SCAN_INTERVAL", 600))
         self.last_scan = time.time() - self.scan_interval
