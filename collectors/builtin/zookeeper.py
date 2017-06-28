@@ -26,7 +26,7 @@ from subprocess import Popen, PIPE, CalledProcessError
 import re
 from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
-
+import commands
 
 class Zookeeper(CollectorBase):
     def __init__(self, config, logger, readq):
@@ -48,9 +48,7 @@ class Zookeeper(CollectorBase):
             "zk_server_state",
             "zk_followers",
             "zk_synced_followers",
-            "zk_pending_syncs",
-            "zk_version",
-            "zk_max_file_descriptor_count"
+            "zk_pending_syncs"
         ])
         self.scan_interval = int(self.get_config("SCAN_INTERVAL", 600))
         self.last_scan = time.time() - self.scan_interval
@@ -170,13 +168,15 @@ class Zookeeper(CollectorBase):
             ipaddr = '::1'
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            ipaddr = '127.0.0.1'
+            host_name =socket.gethostname()
+            ipaddr = socket.gethostbyname(host_name)
         try:
             sock.connect((ipaddr, port))
         except Exception:
             self._readq.nput("zookeeper.state %s %s" % (int(time.time()), '1'))
-            self.log_exception("exception when connecting to zookeeper")
+            self.log_exception("exception when connecting to zookeeper ,it use tcp_version is %s and  use port is %s "%(tcp_version,port))
         return sock
+
 
     def convert_server_state_to_int(self, server_state):
         if server_state == "leader":
