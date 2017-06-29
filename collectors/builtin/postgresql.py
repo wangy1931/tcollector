@@ -88,6 +88,7 @@ class Postgresql(CollectorBase):
                               % (sockdir, self.user, self.password,
                                  CONNECT_TIMEOUT))
     except (EnvironmentError, EOFError, RuntimeError, socket.error), e:
+      self._readq.nput("postgresql.state %i 1" % time.time())
       self.log_error("Couldn't connect to DB :%s" % (e))
 
   def collect(self, db):
@@ -123,6 +124,7 @@ class Postgresql(CollectorBase):
             if metric in ("stats_reset"):
               continue
             self._readq.nput("postgresql.%s %i %s database=%s" % (metric, ts, value, database))
+            self._readq.nput("postgresql.state %i 0" % ts)
           except:
             self.log_error("got here")
             continue
@@ -141,5 +143,5 @@ class Postgresql(CollectorBase):
       if isinstance(e, IOError) and e[0] == errno.EPIPE:
         # exit on a broken pipe. There is no point in continuing
         # because no one will read our stdout anyway.
-        return 2
+        self._readq.nput("postgresql.state %i 1" % time.time())
       self.log_error("error: failed to collect data: %s" % e)
