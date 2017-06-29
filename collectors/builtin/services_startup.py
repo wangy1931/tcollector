@@ -14,7 +14,6 @@
 #
 """Service startup stats for TSDB"""
 
-import calendar
 import time
 import re
 import requests
@@ -65,7 +64,7 @@ class ServicesStartup(CollectorBase):
                 tokens = line.split()
                 time_str="%s %s %s %s"%(tokens[2], tokens[3], tokens[4], tokens[5])
                 d = time.strptime(time_str, "%b %d %H:%M:%S %Y")
-                startup_sec = int(calendar.timegm(d))
+                startup_sec = int(time.mktime(d))
 
                 service_tag = "service=%s.%s"%(tokens[0], service)
                 self.print_metric(startup_sec, startup_sec, service_tag)
