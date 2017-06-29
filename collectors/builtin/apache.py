@@ -53,7 +53,9 @@ class Apache(CollectorBase):
         except Exception as e:
             self.log_error("Caught exception %s" % str(e))
             self._readq.nput("%s %d %s" % ("apache.state", self.ts, "1"))
-
+            raise
+        else:
+            self._readq.nput("%s %d %s" % ("apache.state", self.ts, "0"))
 
 
     def set_metric_value(self,response):
@@ -65,6 +67,7 @@ class Apache(CollectorBase):
                     value = float(value)
                 except ValueError:
                     continue
+
                 if metric == 'Total kBytes':
                     value = value * 1024
 
@@ -73,4 +76,3 @@ class Apache(CollectorBase):
                     self._readq.nput("%s %d %s" % (metric_name,self.ts,str(value)))
                 else:
                     self.log_warn("%s not in KEYS" % (metric))
-        self._readq.nput("%s %d %s" % ("apache.state", self.ts, "0"))
