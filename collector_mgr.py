@@ -26,6 +26,8 @@ def main(argv):
         elif argv[1] == 'disable':
             if len(argv) < 3:
                 usage_and_exit(argv)
+            if argv[2] == 'all':
+                disable_all()
             enable_or_disable(argv[2], "False")
         else:
             usage_and_exit(argv)
@@ -63,6 +65,21 @@ def status_json():
         config_obj['service'] = os.path.splitext(os.path.basename(conf_file))[0]
         results.append(config_obj)
     print json.dumps(results)
+
+def disable_all():
+    conf_files = glob.glob(os.path.join(COLLECTOR_CONFIG_ROOT, "*.conf"))
+    for conf_file in conf_files:
+        try:
+            parser = ConfigParser.SafeConfigParser()
+            parser.read(conf_file)
+            parser.set("base", "enabled", "False")
+            with open(conf_file, 'wb') as fp:
+                parser.write(fp)
+        except Exception as e:
+            print 'error enable %s. %s' % (conf_file, e)
+    print 'done'
+    status()
+    sys.exit(1)
 
 def enable_or_disable(comma_demilitted_str, action):
     for conf_file_name in comma_demilitted_str.split(","):
