@@ -37,6 +37,7 @@ class Apache(CollectorBase):
         }
 
 
+
     def __call__(self):
         self.ts = time.time()
         self.exe()
@@ -44,13 +45,15 @@ class Apache(CollectorBase):
     def exe(self):
         try:
             r = requests.get(self.url,auth=self.auth, headers=header,
-                             verify=not self.disable_ssl_validation, timeout=(self.connect_timeout, self.receive_timeout))
+                             verify=not self.disable_ssl_validation,
+                             timeout=(self.connect_timeout, self.receive_timeout))
             r.raise_for_status()
             response = r.content
             self.set_metric_value(response)
         except Exception as e:
             self.log_error("Caught exception %s" % str(e))
-            raise
+            self._readq.nput("%s %d %s" % ("apache.state", self.ts, "1"))
+
 
 
     def set_metric_value(self,response):
@@ -62,22 +65,12 @@ class Apache(CollectorBase):
                     value = float(value)
                 except ValueError:
                     continue
-
                 if metric == 'Total kBytes':
                     value = value * 1024
 
                 if metric in self.KEY_VALUES:
                     metric_name = self.KEY_VALUES[metric]
                     self._readq.nput("%s %d %s" % (metric_name,self.ts,str(value)))
-
-
-
-
-
-
-def test():
-    pass
-
-if __name__=='__main__':
-    test()
-       # sleep(10)
+                else:
+                    self.log_warn("%s not in KEYS" % (metric))
+        self._readq.nput("%s %d %s" % ("apache.state", self.ts, "0"))
