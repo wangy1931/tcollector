@@ -27,7 +27,6 @@ import re
 from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
 
-
 class Zookeeper(CollectorBase):
     def __init__(self, config, logger, readq):
         super(Zookeeper, self).__init__(config, logger, readq)
@@ -168,13 +167,15 @@ class Zookeeper(CollectorBase):
             ipaddr = '::1'
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            ipaddr = '127.0.0.1'
+            host_name =socket.gethostname()
+            ipaddr = socket.gethostbyname(host_name)
         try:
             sock.connect((ipaddr, port))
         except Exception:
             self._readq.nput("zookeeper.state %s %s" % (int(time.time()), '1'))
-            self.log_exception("exception when connecting to zookeeper")
+            self.log_exception("exception when connecting to zookeeper ,it use tcp_version is %s and  use port is %s "%(tcp_version,port))
         return sock
+
 
     def convert_server_state_to_int(self, server_state):
         if server_state == "leader":
