@@ -22,8 +22,6 @@ from Queue import Queue
 
 from collectors.lib.collectorbase import CollectorBase
 
-nginx_status_url = '/nginx_status'
-
 
 # There are two ways to collect Nginx's stats.
 # 1. [yi-ThinkPad-T430 scripts (master)]$ curl http://localhost:8080/nginx_status
@@ -41,7 +39,13 @@ class Nginx(CollectorBase):
         super(Nginx, self).__init__(config, logger, readq)
         self.port = self.get_config('port', 8080)
         self.host = self.get_config('host', "localhost")
-        self.http_prefix = 'http://%s:%s' % (self.host, self.port)
+        self.nginx_status_url = self.get_config('uri', "/nginx_status")
+
+        is_enable_https = self.get_config('is_enable_https', False)
+        if is_enable_https:
+            self.http_prefix = 'https://%s:%s' % (self.host, self.port)
+        else :
+            self.http_prefix = 'http://%s:%s' % (self.host, self.port)
 
 
     def __call__(self):
@@ -50,7 +54,7 @@ class Nginx(CollectorBase):
 
     def collect_nginx_status(self, ts_curr):
         try:
-            stats = requests.get('%s%s' % (self.http_prefix, nginx_status_url)).content
+            stats = requests.get('%s%s' % (self.http_prefix, self.nginx_status_url)).content
             m = re.match(r"Active connections:\s+(\d+)\s+"
                          "\nserver accepts handled requests\n\s+(\d+)\s+(\d+)\s+(\d+)\s+"
                          "\nReading:\s+(\d+)\s+Writing:\s+(\d+)\s+Waiting:\s+(\d+)\s+\n",
@@ -67,4 +71,5 @@ class Nginx(CollectorBase):
         except Exception as e:
             self._readq.nput("nginx.state %s %s" % (int(time.time()), '1'))
             self.log_error("Exception when collector nginx metrics from /nginx_status \n %s" % e)
+            self.log_error("Exception access %s%s \n" % (self.http_prefix, self.nginx_status_url))
 
