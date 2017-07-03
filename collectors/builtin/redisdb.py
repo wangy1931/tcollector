@@ -5,13 +5,12 @@ import re
 import time
 import redis
 
-DEFAULT_MAX_SLOW_ENTRIES = 128
-MAX_SLOW_ENTRIES_KEY = "slowlog-max-len"
-
-REPL_KEY = 'master_link_status'
-LINK_DOWN_KEY = 'master_link_down_since_seconds'
 
 class Redisdb(CollectorBase):
+    DEFAULT_MAX_SLOW_ENTRIES = 128
+    MAX_SLOW_ENTRIES_KEY = "slowlog-max-len"
+    REPL_KEY = 'master_link_status'
+    LINK_DOWN_KEY = 'master_link_down_since_seconds'
     db_key_pattern = re.compile(r'^db\d+')
     slave_key_pattern = re.compile(r'^slave\d+')
     GAUGE_KEYS = {
@@ -233,13 +232,13 @@ class Redisdb(CollectorBase):
                     slave_tags.append('slave_id:%s' % key.lstrip('slave'))
                     self.send_info_guage('redis.replication.delay', delay, tags=slave_tags)
 
-        if REPL_KEY in info:
-            if info[REPL_KEY] == 'up':
+        if self.REPL_KEY in info:
+            if info[self.REPL_KEY] == 'up':
                 status ="0"
                 down_seconds = 0
             else:
                 status = "1"
-                down_seconds = info[LINK_DOWN_KEY]
+                down_seconds = info[self.LINK_DOWN_KEY]
 
             self.send_info_guage('redis.replication.master_link_status', status, tags=tags)
             self.send_info_guage('redis.replication.master_link_down_since_seconds', down_seconds, tags=tags)
@@ -247,17 +246,17 @@ class Redisdb(CollectorBase):
     def _check_slowlog(self, custom_tags):
         conn = self._get_conn()
         tags = self._get_tags(custom_tags)
-        if not self.conf_dict.get(MAX_SLOW_ENTRIES_KEY):
+        if not self.conf_dict.get(self.MAX_SLOW_ENTRIES_KEY):
             try:
-                max_slow_entries = int(conn.config_get(MAX_SLOW_ENTRIES_KEY)[MAX_SLOW_ENTRIES_KEY])
-                if max_slow_entries > DEFAULT_MAX_SLOW_ENTRIES:
+                max_slow_entries = int(conn.config_get(self.MAX_SLOW_ENTRIES_KEY)[self.MAX_SLOW_ENTRIES_KEY])
+                if max_slow_entries > self.DEFAULT_MAX_SLOW_ENTRIES:
                     self.log_warn("Redis {0} is higher than {1}. Defaulting to {1}."
                                  "If you need a higher value, please set {0} in your check config"
-                                 .format(MAX_SLOW_ENTRIES_KEY, DEFAULT_MAX_SLOW_ENTRIES))
+                                 .format(self.MAX_SLOW_ENTRIES_KEY, self.DEFAULT_MAX_SLOW_ENTRIES))
             except redis.ResponseError:
-                max_slow_entries = DEFAULT_MAX_SLOW_ENTRIES
+                max_slow_entries = self.DEFAULT_MAX_SLOW_ENTRIES
         else:
-            max_slow_entries = int(self.conf_dict.get(MAX_SLOW_ENTRIES_KEY))
+            max_slow_entries = int(self.conf_dict.get(self.MAX_SLOW_ENTRIES_KEY))
 
         ts_key = self.redis_key
         slowlogs = conn.slowlog_get(max_slow_entries)
