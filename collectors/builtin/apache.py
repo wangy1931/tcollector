@@ -53,7 +53,6 @@ class Apache(CollectorBase):
         except Exception as e:
             self.log_error("Caught exception %s" % str(e))
             self._readq.nput("%s %d %s" % ("apache.state", self.ts, "1"))
-            raise
         else:
             self._readq.nput("%s %d %s" % ("apache.state", self.ts, "0"))
 
