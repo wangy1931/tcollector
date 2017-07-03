@@ -1,5 +1,5 @@
 import time
-from collectors.lib.collectorbase import CollectorBase
+from collectors.lib.collectorbase import CollectorBase, MetricType
 import requests
 
 header={
@@ -21,7 +21,7 @@ class Apache(CollectorBase):
         apache_password=self.get_config('apache_password',None)
         if apache_user is not None and  apache_password is not None:
             self.auth=(apache_user,apache_password)
-        self.KEY_VALUES={
+        self.GAUGES={
             'IdleWorkers': 'apache.performance.idle_workers',
             'BusyWorkers': 'apache.performance.busy_workers',
             'CPULoad': 'apache.performance.cpu_load',
@@ -31,10 +31,12 @@ class Apache(CollectorBase):
             'ConnsTotal': 'apache.conns_total',
             'ConnsAsyncWriting': 'apache.conns_async_writing',
             'ConnsAsyncKeepAlive': 'apache.conns_async_keep_alive',
-            'ConnsAsyncClosing': 'apache.conns_async_closing',
+            'ConnsAsyncClosing': 'apache.conns_async_closing'}
+        self.RATES = {
             'Total kBytes': 'apache.net.bytes_per_s',
             'Total Accesses': 'apache.net.request_per_s'
         }
+
 
 
 
@@ -70,8 +72,11 @@ class Apache(CollectorBase):
                 if metric == 'Total kBytes':
                     value = value * 1024
 
-                if metric in self.KEY_VALUES:
-                    metric_name = self.KEY_VALUES[metric]
+                if metric in self.GAUGES:
+                    metric_name = self.GAUGES[metric]
                     self._readq.nput("%s %d %s" % (metric_name,self.ts,str(value)))
+                elif metric in self.RATES:
+                    metric_name = self.RATES[metric]
+                    self._readq.nput("%s %d %d metric_type=%s" % (metric_name, self.ts, str(value), MetricType.COUNTER))
                 else:
-                    self.log_warn("%s not in KEYS" % (metric))
+                    self.log_warn("%s not in KEYS or RATES" % (metric))
