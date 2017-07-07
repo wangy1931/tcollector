@@ -16,7 +16,7 @@
 
 import os
 import stat
-import pwd
+#import pwd
 import errno
 import sys
 import requests
@@ -24,6 +24,7 @@ import subprocess
 import socket
 import ConfigParser
 import re
+
 from Queue import Queue
 
 # If we're running as root and this user exists, we'll drop privileges.
