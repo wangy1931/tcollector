@@ -126,27 +126,9 @@ class Redisdb(CollectorBase):
 
         return self.connections[key]
 
-    def _get_tags(self, custom_tags):
-        tags = set(custom_tags or [])
-
-        if 'unix_socket_path' in self.conf_dict:
-            tags_to_add = [
-                "redis_host=%s" % self.conf_dict.get("unix_socket_path"),
-                "redis_port=unix_socket",
-            ]
-        else:
-            tags_to_add = [
-                "redis_host=%s" % self.conf_dict.get('host'),
-                "redis_port=%s" % self.conf_dict.get('port')
-            ]
-
-        tags = sorted(tags.union(tags_to_add))
-
-        return tags
-
     def _check_db(self, custom_tags=None):
         conn = self._get_conn()
-        tags = self._get_tags(custom_tags)
+        tags = custom_tags
         start = time.time()
         try:
             info = conn.info()
@@ -245,7 +227,7 @@ class Redisdb(CollectorBase):
 
     def _check_slowlog(self, custom_tags):
         conn = self._get_conn()
-        tags = self._get_tags(custom_tags)
+        tags = custom_tags
         if not self.conf_dict.get(self.MAX_SLOW_ENTRIES_KEY):
             try:
                 max_slow_entries = int(conn.config_get(self.MAX_SLOW_ENTRIES_KEY)[self.MAX_SLOW_ENTRIES_KEY])
