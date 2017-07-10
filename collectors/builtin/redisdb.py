@@ -119,7 +119,6 @@ class Redisdb(CollectorBase):
                 self.conf_dict['socket_timeout'] = self.conf_dict.get('socket_timeout', 5)
                 connection_params = dict((k, self.conf_dict[k]) for k in list_params if k in self.conf_dict)
                 self.connections[key] = redis.Redis(**connection_params)
-                self.send_info_guage("redis.state", "0")
             except Exception :
                 self.log_error("You need a redis library that supports authenticated connections. Try sudo easy_install redis.")
                 self.send_info_guage("redis.state","1")
@@ -133,13 +132,11 @@ class Redisdb(CollectorBase):
         try:
             info = conn.info()
             tags = sorted(tags + ["redis_role=%s" % info["role"]])
-            self.send_info_guage('redis.can_connect', "0")
+            self.send_info_guage('redis.state', "0")
         except ValueError:
-            self.send_info_guage('redis.can_connect', "1")
-            raise
+            self.send_info_guage('redis.state', "1")
         except Exception:
-            self.send_info_guage('redis.can_connect', "1")
-            raise
+            self.send_info_guage('redis.state', "1")
 
         latency_ms = round((time.time() - start) * 1000, 2)
         self.send_info_guage('redis.info.latency_ms', latency_ms, tags=tags)
