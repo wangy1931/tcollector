@@ -170,6 +170,21 @@ if [[ ! "$skip" = true ]]; then
   popd
   log_info 'finish setting up meld3'
 
+  log_info 'set up redisdb ...'
+  if [[ ! -f ${workspace_folder}/redis-2.10.5.tar.gz ]]; then
+    log_info 'download redis-2.10.5 tarball'
+    wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/redis-2.10.5.tar.gz#md5=3b26c2b9703b4b56b30a1ad508e31083
+    abort_if_failed 'failed to download redis-2.10.5 tarball'
+  fi
+  tar -xzf "${workspace_folder}"/redis-2.10.5.tar.gz -C "${workspace_folder}"
+  abort_if_failed 'failed to extract redis-2.10.5 tarball'
+
+  pushd "${workspace_folder}"/redis-2.10.5
+  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
+  abort_if_failed 'failed to install redis-2.10.5'
+  popd
+  log_info 'finish setting up redisdb'
+
   log_info "set up pymysql ..."
    if [[ ! -f ${workspace_folder}/PyMySQL-0.7.11.tar.gz ]]; then
     log_info 'download meld3-0.6.5 tarball'

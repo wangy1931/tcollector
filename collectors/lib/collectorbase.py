@@ -100,6 +100,11 @@ class CollectorBase(object):
             self.log_info('%s killed', pid)
         except:
             self.log_exception('ignoring uncaught exception while close subprocess %d', proc.pid)
+    def send_info_guage(self,metric_name, value, tags = []):
+        self._readq.nput("%s %d %s %s" % (metric_name, self.ts, value, " ".join(tags)))
+
+    def send_info_rate(self,metric_name, value, tags = []):
+        self._readq.nput("%s %d %s %s metric_type=%s" % (metric_name, self.ts, value, " ".join(tags), MetricType.COUNTER))
 
 
 class MetricType(object):
