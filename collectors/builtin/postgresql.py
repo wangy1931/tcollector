@@ -26,7 +26,6 @@ at postgresql.conf .
 import os
 import time
 import socket
-import errno
 
 try:
   import psycopg2
@@ -54,22 +53,34 @@ class Postgresql(CollectorBase):
     if psycopg2 is None:
       raise Exception("error: Python module 'psycopg2' is missing")  # Ask tcollector to not respawn us
 
-    sockdir = self.find_sockdir()
+    self.sockdir = self.find_sockdir()
     self.host = self.get_config('host')
     if self.host:
-      sockdir = self.host
+      self.sockdir = self.host
     self.user = self.get_config('user')
     self.password = self.get_config('password')
-
-    if not sockdir:  # Nothing to monitor
+    self.db = None
+    if not self.sockdir:  # Nothing to monitor
       raise Exception("error: Can't find postgresql socket file")  # Ask tcollector to not respawn us
 
-    self.db = self.postgres_connect(sockdir)
-    self.db.autocommit = True
-
   def __call__(self):
-    self.collect(self.db)
+    if self.db is None:
+      try:
+        self.db = self.postgres_connect(self.sockdir)
+        self.db.autocommit = True
+      except Exception as e:
+        self.log_error("can't access postgresql %s" % e)
+        self._readq.nput("postgresql.state %i 1" % time.time())
+        return
 
+    try:
+      self.collect(self.db)
+    except :
+      self._readq.nput("postgresql.state %i 1" % time.time())
+      return
+    finally:
+      self.db.close()
+      self.db = None
 
   def find_sockdir(self):
     """Returns a path to PostgreSQL socket file to monitor."""
@@ -87,9 +98,10 @@ class Postgresql(CollectorBase):
                               "connect_timeout='%s' dbname=postgres"
                               % (sockdir, self.user, self.password,
                                  CONNECT_TIMEOUT))
-    except (EnvironmentError, EOFError, RuntimeError, socket.error), e:
+    except (StandardError, EnvironmentError, EOFError, RuntimeError, socket.error, interface_error, programming_error), e:
       self._readq.nput("postgresql.state %i 1" % time.time())
       self.log_error("Couldn't connect to DB :%s" % (e))
+      raise Exception("can't connect postgresql")
 
   def collect(self, db):
     """
@@ -136,12 +148,8 @@ class Postgresql(CollectorBase):
       connections = cursor.fetchall()
 
       for database, connection in connections:
-        self._readq.nput("postgresql.connections %i %s database=%s"
-               % (ts, connection, database))
+        self._readq.nput("postgresql.connections %i %s database=%s" % (ts, connection, database))
 
-    except (EnvironmentError, EOFError, RuntimeError, socket.error), e:
-      if isinstance(e, IOError) and e[0] == errno.EPIPE:
-        # exit on a broken pipe. There is no point in continuing
-        # because no one will read our stdout anyway.
-        self._readq.nput("postgresql.state %i 1" % time.time())
+    except (StandardError, EnvironmentError, EOFError, RuntimeError, socket.error, interface_error, programming_error), e:
+      self._readq.nput("postgresql.state %i 1" % time.time())
       self.log_error("error: failed to collect data: %s" % e)
