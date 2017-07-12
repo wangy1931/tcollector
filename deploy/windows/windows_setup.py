@@ -12,7 +12,7 @@ build_exe_options = {"packages": ["collectors"],"include_files":files}
 executables = [
     Executable('runner.py'),
     Executable('collector_mgr.py'),
-    Executable('deploy/windows/window_deploy.py')
+    Executable('deploy/windows/windows_deploy.py')
 ]
 
 setup(name='cloudwiz-agent',
