@@ -1,0 +1,3 @@
+在本目录下运行 参数说明
+windows_init.bat（脚本） 8622c8d8feec6d11ee94b5efd1a1eb023785f147（token） 2（version） https://download.cloudwiz.cn/agent（AGENT_URL） tsdb.cloudwiz.cn（METRIC_SERVER_HOST） https://alert.cloudwiz.cn（METRIC_SERVER_HOST）
+windows_init.bat 8622c8d8feec6d11ee94b5efd1a1eb023785f147 2 https://download.cloudwiz.cn/agent tsdb.cloudwiz.cn https://alert.cloudwiz.cn
