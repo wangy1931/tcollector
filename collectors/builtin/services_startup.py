@@ -40,7 +40,11 @@ class ServicesStartup(CollectorBase):
         self.initialize = True
         self.services_before = []
         self.services_after = []
-        self.services = ast.literal_eval(self.get_config("services"))
+        try:
+            self.services = ast.literal_eval(self.get_config("services"))
+        except:
+            self.log_warn("please rewrite services config")
+            self.services = self.get_config('services', 'alertd, datanode').split(',')
 
     def __call__(self):
         try:
