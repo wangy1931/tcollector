@@ -38,10 +38,11 @@ class ServicesStartup(CollectorBase):
     def __init__(self, config, logger, readq):
         super(ServicesStartup, self).__init__(config, logger, readq)
         self.initialize = True
-        self.services_before = []
-        self.services_after = []
+        self.last_started_services = []
+        self.curr_started_services = []
         try:
             self.services = ast.literal_eval(self.get_config("services"))
+            self.last_started_services = self.services
         except:
             self.log_warn("please rewrite services config")
             self.services = self.get_config('services', 'alertd, datanode').split(',')
@@ -69,10 +70,7 @@ class ServicesStartup(CollectorBase):
         for service in self.services:
             service = service.strip()
             if service in line:
-                if self.initialize:
-                    self.services_before.append(service)
-
-                self.services_after.append(service)
+                self.curr_started_services.append(service)
                 tokens = line.split()
                 time_str="%s %s %s %s"%(tokens[2], tokens[3], tokens[4], tokens[5])
                 d = time.strptime(time_str, "%b %d %H:%M:%S %Y")
@@ -82,11 +80,8 @@ class ServicesStartup(CollectorBase):
                 self.print_metric(startup_sec, startup_sec, service_tag)
 
     def swap(self):
-        print self.services_before
-        print self.services_after
-        stop_services = [item for item in self.services_before if item not in self.services_after]
-        print stop_services
+        stop_services = [item for item in self.last_started_services if item not in self.curr_started_services]
         for service in stop_services:
-            self._readq.nput("service.stopAsSec %d %s %s" % (int(time.time()), 1, "service=%s"% utils.remove_invalid_characters(service)))
-        self.services_before = self.services_after
-        self.services_after = []
+            self._readq.nput("service.stopAtSec %d %s %s" % (int(time.time()), 1, "service=%s"% utils.remove_invalid_characters(service)))
+        self.last_started_services = self.curr_started_services
+        self.curr_started_services = []
