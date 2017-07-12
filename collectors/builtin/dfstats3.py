@@ -37,8 +37,8 @@ class Dfstats3(CollectorBase):
 
     def __init__(self, config, logger, readq):
         super(Dfstats3, self).__init__(config, logger, readq)
-        log = logging.getLogger("C:\\logs\\test.log")
-        self.WMISampler = partial(WMISampler, log)
+        # log = logging.getLogger("C:\\logs\\test.log")
+        self.WMISampler = partial(WMISampler, logger)
 
     def __call__(self):
         metrics = self.WMISampler("Win32_LogicalDisk", \
@@ -50,7 +50,11 @@ class Dfstats3(CollectorBase):
         ts = int(time.time())
 
         for metric in metrics:
-            drive = "c"
+            drive_list=str(metric.get("deviceid")).split(":")
+            if len(drive_list) >0 :
+                drive = drive_list[0]
+            else:
+                drive="C"
             for key, value in metric.iteritems():
                 if isinstance(value, numbers.Number):
                     self._readq.nput("system.fs.%s %d %f drive=%s" % (key, ts, value, drive))
