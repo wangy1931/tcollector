@@ -100,14 +100,15 @@ class Kafka(JolokiaAgentCollectorBase):
             "java.lang:name=G1 Old Generation,type=GarbageCollector": JolokiaG1GCParser(logger, "kafka", "g1_old_gen")
         }
         port = JolokiaAgentCollectorBase.get_config(config, "port", "8778")
-        super(Kafka, self).__init__(config, logger, readq, Kafka.JMX_REQUEST_JSON, parsers, "kafka", Kafka.CHECK_KAFKA_PID_INTERVAL, port)
+        super(Kafka, self).__init__(config, logger, readq, Kafka.JMX_REQUEST_JSON, parsers, "Kafka","kafka.kafka", Kafka.CHECK_KAFKA_PID_INTERVAL, port)
 
     def __call__(self):
         try:
             super(Kafka, self).__call__()
             self._readq.nput("kafka.state %s %s" % (int(time.time()), '0'))
         except Exception:
-            self.log_error("failed to kafka collect for application ")
+            import traceback
+            self.log_error("failed to kafka collect for application "+traceback.print_exc())
             self._readq.nput("kafka.state %s %s" % (int(time.time()), '1'))
 
     def cleanup(self):
