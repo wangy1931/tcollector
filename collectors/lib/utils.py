@@ -106,24 +106,18 @@ def remove_invalid_characters(str):
         return "".join(lstr)
     else:
         return str
-def get_all_pids_by_langague_name(langague_name):
 
-    commond_line="ps -ef | grep %s | awk '{print $1\",\"$2\",\"$n} '"%langague_name
-    user_pids_infos=subprocess.check_output(commond_line, shell=True).split('\n')
-    user_pids_info_tuples=[]
-    for user_pids_info in user_pids_infos:
-        if user_pids_info !='' and 'grep' not in  user_pids_info:
-            user_pids_info_list=user_pids_info.split(",")
-            user_pids_info_tuples.append((user_pids_info_list[0],user_pids_info_list[1],user_pids_info_list[2]))
-    return user_pids_info_tuples
 
-def get_pid_and_user_by_pname_and_planguage(pname_pattern_compiled,language_name):
-    # verified for both front-running and daemon type process
-    all_langague_processes = get_all_pids_by_langague_name(language_name)
-    for puser,pid,space_name in all_langague_processes:
-        m = re.search(pname_pattern_compiled, space_name)
-        if m is not None:
-            return long(pid), puser
+
+def get_pid_and_user_by_pname(process_unique_string):
+    commond_line = "ps -ef | grep %s | awk '{print $1\",\"$2}'" % process_unique_string
+    pid_user_cmds = subprocess.check_output(commond_line, shell=True).split('\n')
+
+    for pid_user_cmd in pid_user_cmds:
+        if pid_user_cmd != '' and 'grep' not in pid_user_cmd:
+            pid_user_info_list = pid_user_cmd.split(",")
+            return (pid_user_info_list[0]),pid_user_info_list[1]
+
     return None, None
 
 
@@ -170,7 +164,3 @@ class TestLogger(object):
     def exception(self, msg, *args, **kwargs):
         sys.stderr.write("ERROR: " + msg % args)
 
-
-if __name__ == "__main__":
-    name=re.compile(r'kafka.kafka', re.IGNORECASE)
-    print get_pid_and_user_by_pname_and_planguage(name,"java")
