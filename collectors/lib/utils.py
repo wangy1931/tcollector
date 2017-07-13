@@ -106,23 +106,45 @@ def remove_invalid_characters(str):
         return "".join(lstr)
     else:
         return str
+def get_kafka_pid():
+    for dirname in os.listdir('/proc'):
+        if dirname == 'curproc':
+            continue
 
+        try:
+            with open('/proc/{}/cmdline'.format(dirname), mode='rb') as fd:
+                content = fd.read().decode().split('\x00')
+        except Exception:
+            continue
 
-def get_java_pid_and_user_by_pname(pname_pattern_compiled):
+        if 'java' in content[0] and 'kafka.Kafka' in content:
+            return  long(dirname)
+    return None
+
+def get_java_pid_and_user_by_pname(pname_pattern_compiled,pname):
     # verified for both front-running and daemon type process
     all_java_processes = subprocess.check_output(['jps']).split("\n")
+    pid=-1L
+    puser=None
     for pid_space_name in all_java_processes:
         m = re.search(pname_pattern_compiled, pid_space_name)
         if m is not None:
-            pid = m.group("pid")
-            user_qstr_lines = "ps -p %s -o ruser | wc -l" % pid
+            local_pid = m.group("pid")
+            user_qstr_lines = "ps -p %s -o ruser | wc -l" % local_pid
             lines = int(subprocess.check_output(user_qstr_lines, shell=True).split("\n")[0])
             if lines >= 2:
-                user_qstr = "ps -p %s -o ruser | tail -n 1" % pid
+                user_qstr = "ps -p %s -o ruser | tail -n 1" % local_pid
                 puser = subprocess.check_output(user_qstr, shell=True).split("\n")[0]
-                return long(m.group("pid")), puser
+                pid=long(m.group("pid"))
+                return pid, puser
             else:
-                return long(m.group("pid")), None
+                if pid != -1:
+                    return pid, None
+
+    if pid == -1 and pname == "kafka":
+        pid=get_kafka_pid()
+        return pid,puser
+
     return None, None
 
 
