@@ -11,7 +11,7 @@ from jolokia import JolokiaCollector
 class JolokiaAgentCollectorBase(JolokiaCollector):
     JOLOKIA_JAR = "jolokia-jvm-1.3.5-agent.jar"
 
-    def __init__(self, config, logger, readq, jmx_request_json, parsers, processname,process_uqique,check_pid_interval, port):
+    def __init__(self, config, logger, readq, jmx_request_json, parsers, processname,process_pattern,check_pid_interval, port):
         protocol = "http"
         self.port = port
         super(JolokiaAgentCollectorBase, self).__init__(config, logger, readq, protocol, self.port, jmx_request_json, parsers)
@@ -21,7 +21,7 @@ class JolokiaAgentCollectorBase(JolokiaCollector):
         if not os.path.isfile(self.jolokia_file_path):
             raise IOError("failed to find jolokia jar at %s" % self.jolokia_file_path)
         self.process_name = processname
-        self.process_pattern = process_uqique
+        self.process_pattern = process_pattern
         self.check_pid_interval = check_pid_interval
         self.checkpid_time = 0
         self.process_pid = -1
