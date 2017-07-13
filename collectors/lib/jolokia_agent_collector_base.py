@@ -31,9 +31,9 @@ class JolokiaAgentCollectorBase(JolokiaCollector):
         curr_time = time.time()
         if curr_time - self.checkpid_time >= self.check_pid_interval:
             self.checkpid_time = curr_time
-            pid, puser = utils.get_java_pid_and_user_by_pname(self.process_pattern)
-            if pid is None or puser is None:
-                raise Exception("failed to find %s process, One of the (pid, puser) pair is None (%d, %s)" % (self.process_name, pid, puser))
+            pid, puser = utils.get_java_pid_and_user_by_pname(self.process_pattern,self.process_name)
+            if pid is None and puser is None:
+                raise Exception("failed to find %s process, One of the (pid, puser) pair is None (%s, %s)" % (self.process_name, str(pid), str(puser)))
             if self.process_pid != pid:
                 self.log_info("found %s pid %d, puser %s", self.process_name, pid, puser)
                 if self.jolokia_process is not None:
