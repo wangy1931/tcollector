@@ -86,8 +86,6 @@ METRIC_SUFFIX = {
     NODE_TYPE: "node",
 }
 
-CONFIG = {}
-
 
 class RabbitMqException(Exception):
     pass
@@ -96,35 +94,19 @@ class RabbitMqException(Exception):
 class RabbitMq(CollectorBase):
     def __init__(self, config, logger, readq):
         super(RabbitMq, self).__init__(config, logger, readq)
-        try:
-            CONFIG['rabbitmq_api_url'] = self.get_config('rabbitmq_api_url', 'http://192.168.1.105:15672/api/')
-            CONFIG['rabbitmq_user'] = self.get_config('rabbitmq_user', 'guest')
-            CONFIG['rabbitmq_pass'] = self.get_config('rabbitmq_pass', 'guest')
-            CONFIG['ssl_verify'] = self.get_config('ssl_verify')
-            CONFIG['tags'] = self.get_config('tags')
-            CONFIG['queues_regexes'] = eval(self.get_config('queues_regexes', "['.*']"))
-            CONFIG['nodes_regexes'] = eval(self.get_config('nodes_regexes', "['.*']"))
-        except Exception as e:
-            self.log_error("Illegal config!")
-
-        if self.get_config('queues') != None:
-            CONFIG['queues'] = list(str(self.get_config('queues')).split(','))
-        if self.get_config('nodes') != None:
-            CONFIG['nodes'] = list(str(self.get_config('nodes')).split(','))
 
     def __call__(self):
-        self.check(CONFIG)
+        self.check()
 
-    def _get_config(self, instance):
+    def _get_config(self):
         # make sure 'rabbitmq_api_url' is present and get parameters
-        base_url = instance.get('rabbitmq_api_url', None)
+        base_url = self.get_config('rabbitmq_api_url', 'http://localhost:15672/api/')
         if not base_url:
             raise Exception('Missing "rabbitmq_api_url" in RabbitMQ config.')
         if not base_url.endswith('/'):
             base_url += '/'
-        username = instance.get('rabbitmq_user', 'guest')
-        password = instance.get('rabbitmq_pass', 'guest')
-        custom_tags = ''
+        username = self.get_config('rabbitmq_user', 'guest')
+        password = self.get_config('rabbitmq_pass', 'guest')
         parsed_url = urlparse.urlparse(base_url)
         ssl_verify = False
         if not ssl_verify and parsed_url.scheme == 'https':
@@ -132,19 +114,19 @@ class RabbitMq(CollectorBase):
 
         # Limit of queues/nodes to collect metrics from
         max_detailed = {
-            QUEUE_TYPE: int(instance.get('max_detailed_queues', MAX_DETAILED_QUEUES)),
-            NODE_TYPE: int(instance.get('max_detailed_nodes', MAX_DETAILED_NODES)),
+            QUEUE_TYPE: int(self.get_config('max_detailed_queues', MAX_DETAILED_QUEUES)),
+            NODE_TYPE: int(self.get_config('max_detailed_nodes', MAX_DETAILED_NODES)),
         }
 
         # List of queues/nodes to collect metrics from
         specified = {
             QUEUE_TYPE: {
-                'explicit': instance.get('queues', []),
-                'regexes': instance.get('queues_regexes', []),
+                'explicit': list(str(self.get_config('queues')).split(',')),
+                'regexes': eval(self.get_config('queues_regexes', "['.*']")),
             },
             NODE_TYPE: {
-                'explicit': instance.get('nodes', []),
-                'regexes': instance.get('nodes_regexes', []),
+                'explicit': list(str(self.get_config('nodes')).split(',')),
+                'regexes': eval(self.get_config('nodes_regexes', "['.*']")),
             },
         }
 
@@ -156,10 +138,10 @@ class RabbitMq(CollectorBase):
 
         auth = (username, password)
 
-        return base_url, max_detailed, specified, auth, ssl_verify, custom_tags
+        return base_url, max_detailed, specified, auth, ssl_verify
 
-    def _get_vhosts(self, instance, base_url, auth=None, ssl_verify=True):
-        vhosts = instance.get('vhosts')
+    def _get_vhosts(self, base_url, auth=None, ssl_verify=True):
+        vhosts = self.get_config('vhosts')
 
         if not vhosts:
             # Fetch a list of _all_ vhosts from the API.
@@ -169,24 +151,25 @@ class RabbitMq(CollectorBase):
             vhosts = [v['name'] for v in vhosts_response]
         return vhosts
 
-    def check(self, instance):
-        base_url, max_detailed, specified, auth, ssl_verify, custom_tags = self._get_config(instance)
+    def check(self):
+        base_url, max_detailed, specified, auth, ssl_verify = self._get_config()
         try:
             # Generate metrics from the status API.
-            self.get_stats(instance, base_url, QUEUE_TYPE, max_detailed[QUEUE_TYPE], specified[QUEUE_TYPE], custom_tags,
+            self.get_stats(base_url, QUEUE_TYPE, max_detailed[QUEUE_TYPE], specified[QUEUE_TYPE],
                            auth=auth, ssl_verify=ssl_verify)
-            self.get_stats(instance, base_url, NODE_TYPE, max_detailed[NODE_TYPE], specified[NODE_TYPE], custom_tags,
+            self.get_stats(base_url, NODE_TYPE, max_detailed[NODE_TYPE], specified[NODE_TYPE],
                            auth=auth, ssl_verify=ssl_verify)
-            vhosts = self._get_vhosts(instance, base_url, auth=auth, ssl_verify=ssl_verify)
-            self.get_connections_stat(instance, base_url, CONNECTION_TYPE, vhosts, custom_tags,
+            vhosts = self._get_vhosts(base_url, auth=auth, ssl_verify=ssl_verify)
+            self.get_connections_stat(base_url, CONNECTION_TYPE, vhosts,
                                       auth=auth, ssl_verify=ssl_verify)
 
             # Generate a service check from the aliveness API. In the case of an invalid response
             # code or unparseable JSON this check will send no data.
-            self._check_aliveness(instance, base_url, vhosts, custom_tags, auth=auth, ssl_verify=ssl_verify)
+            self._check_aliveness(base_url, vhosts, auth=auth, ssl_verify=ssl_verify)
             # Generate a service check for the service status.
-
+            self._readq.nput("rabbitmq.state %s %s" % (int(time.time()), '0'))
         except RabbitMqException as e:
+            self._readq.nput("rabbitmq.state %s %s" % (int(time.time()), '1'))
             msg = "Error executing check: {}".format(e)
             self.log_error(msg)
 
@@ -200,7 +183,7 @@ class RabbitMq(CollectorBase):
         except ValueError as e:
             raise RabbitMqException('Cannot parse JSON response from API url: {} {}'.format(url, str(e)))
 
-    def get_stats(self, instance, base_url, object_type, max_detailed, filters, custom_tags, auth=None,
+    def get_stats(self, base_url, object_type, max_detailed, filters, auth=None,
                   ssl_verify=True):
         """
         instance: the check instance
@@ -216,14 +199,6 @@ class RabbitMq(CollectorBase):
         explicit_filters = filters['explicit']
         regex_filters = filters['regexes']
 
-        """ data is a list of nodes or queues:
-        data = [
-            {'status': 'running', 'node': 'rabbit@host', 'name': 'queue1', 'consumers': 0, 'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0, 'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0, 'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0, 'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0, 'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0}, 'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '', 'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False},
-            {'status': 'running', 'node': 'rabbit@host, 'name': 'queue10', 'consumers': 0, 'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0, 'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0, 'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0, 'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0, 'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0}, 'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '', 'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False},
-            {'status': 'running', 'node': 'rabbit@host', 'name': 'queue11', 'consumers': 0, 'vhost': '/', 'backing_queue_status': {'q1': 0, 'q3': 0, 'q2': 0, 'q4': 0, 'avg_ack_egress_rate': 0.0, 'ram_msg_count': 0, 'ram_ack_count': 0, 'len': 0, 'persistent_count': 0, 'target_ram_count': 'infinity', 'next_seq_id': 0, 'delta': ['delta', 'undefined', 0, 'undefined'], 'pending_acks': 0, 'avg_ack_ingress_rate': 0.0, 'avg_egress_rate': 0.0, 'avg_ingress_rate': 0.0}, 'durable': True, 'idle_since': '2013-10-03 13:38:18', 'exclusive_consumer_tag': '', 'arguments': {}, 'memory': 10956, 'policy': '', 'auto_delete': False},
-            ...
-        ]
-        """
         if len(explicit_filters) > max_detailed:
             raise Exception(
                 "The maximum number of %s you can specify is %d." % (object_type, max_detailed))
@@ -276,9 +251,9 @@ class RabbitMq(CollectorBase):
 
         for data_line in data[:max_detailed]:
             # We truncate the list of nodes/queues if it's above the limit
-            self._get_metrics(data_line, object_type, custom_tags)
+            self._get_metrics(data_line, object_type)
 
-    def _get_metrics(self, data, object_type, custom_tags):
+    def _get_metrics(self, data, object_type):
         tags = []
         tag_list = TAGS_MAP[object_type]
         for t in tag_list:
@@ -315,7 +290,7 @@ class RabbitMq(CollectorBase):
                         METRIC_SUFFIX[object_type], attribute, value, str(tags)))
                     self.log_error(e)
 
-    def get_connections_stat(self, instance, base_url, object_type, vhosts, custom_tags, auth=None, ssl_verify=True):
+    def get_connections_stat(self, base_url, object_type, vhosts, auth=None, ssl_verify=True):
         ts = time.time()
         """
         Collect metrics on currently open connection per vhost.
@@ -332,12 +307,12 @@ class RabbitMq(CollectorBase):
                 connection_states[conn['state']] += 1
 
         for vhost, nb_conn in stats.iteritems():
-            self._readq.nput('rabbitmq.connections %d %d %s' % (ts, nb_conn, custom_tags))
+            self._readq.nput('rabbitmq.connections %d %d' % (ts, nb_conn))
 
         for conn_state, nb_conn in connection_states.iteritems():
-            self._readq.nput('rabbitmq.connections.state %d %d %s' % (ts, nb_conn, custom_tags))
+            self._readq.nput('rabbitmq.connections.state %d %d' % (ts, nb_conn))
 
-    def _check_aliveness(self, instance, base_url, vhosts, custom_tags, auth=None, ssl_verify=True):
+    def _check_aliveness(self, base_url, vhosts, auth=None, ssl_verify=True):
         """
         Check the aliveness API against all or a subset of vhosts. The API
         will return {"status": "ok"} and a 200 response code in the case
@@ -346,7 +321,7 @@ class RabbitMq(CollectorBase):
 
         for vhost in vhosts:
             ts = time.time()
-            tags = str(['vhost:%s' % vhost]) + custom_tags
+            tags = str('vhost:%s' % vhost).replace(":", "=")
             # We need to urlencode the vhost because it can be '/'.
             path = u'aliveness-test/%s' % (urllib.quote_plus(vhost))
             aliveness_url = urlparse.urljoin(base_url, path)
@@ -356,7 +331,7 @@ class RabbitMq(CollectorBase):
 
             if aliveness_response.get('status') == 'ok':
                 status = 0
-                self._readq.nput('rabbitmq.aliveness %d %d %s' % (ts, status, custom_tags))
+                self._readq.nput('rabbitmq.aliveness %d %d %s' % (ts, status, tags))
             else:
                 status = 1
-                self._readq.nput('rabbitmq.aliveness %d %d %s' % (ts, status, custom_tags))
+                self._readq.nput('rabbitmq.aliveness %d %d %s' % (ts, status, tags))
