@@ -107,8 +107,7 @@ class Kafka(JolokiaAgentCollectorBase):
             super(Kafka, self).__call__()
             self._readq.nput("kafka.state %s %s" % (int(time.time()), '0'))
         except Exception:
-            import traceback
-            self.log_error("failed to kafka collect for application "+traceback.print_exc())
+            self.log_error("failed to kafka collect for application ")
             self._readq.nput("kafka.state %s %s" % (int(time.time()), '1'))
 
     def cleanup(self):
