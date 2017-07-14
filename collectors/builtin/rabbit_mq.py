@@ -1,4 +1,3 @@
-#! /usr/local/bin/python2
 import re
 import time
 import urllib
