@@ -95,9 +95,11 @@ class RabbitMq(CollectorBase):
         super(RabbitMq, self).__init__(config, logger, readq)
         self.base_url, self.max_detailed, self.specified, self.auth, self.ssl_verify = self._get_config()
 
+    # main method to launch this collector
     def __call__(self):
         self.check(self.base_url, self.max_detailed, self.specified, self.auth, self.ssl_verify)
 
+    # _get_config is to get configuration from ../conf/rabbit_mq.conf
     def _get_config(self):
         # make sure 'rabbitmq_api_url' is present and get parameters
         base_url = self.get_config('rabbitmq_api_url', 'http://localhost:15672/api/')
@@ -154,11 +156,14 @@ class RabbitMq(CollectorBase):
     def check(self, base_url, max_detailed, specified, auth, ssl_verify):
         try:
             # Generate metrics from the status API.
+            # Get status of Queue
             self.get_stats(base_url, QUEUE_TYPE, max_detailed[QUEUE_TYPE], specified[QUEUE_TYPE],
                            auth=auth, ssl_verify=ssl_verify)
+            # Get status of Node
             self.get_stats(base_url, NODE_TYPE, max_detailed[NODE_TYPE], specified[NODE_TYPE],
                            auth=auth, ssl_verify=ssl_verify)
             vhosts = self._get_vhosts(base_url, auth=auth, ssl_verify=ssl_verify)
+            # Get status of vhosts' connection
             self.get_connections_stat(base_url, CONNECTION_TYPE, vhosts,
                                       auth=auth, ssl_verify=ssl_verify)
 
@@ -173,6 +178,7 @@ class RabbitMq(CollectorBase):
             self.log_error(msg)
 
     def _get_data(self, url, auth=None, ssl_verify=True, proxies={}):
+        # Get status JSON by requesting to api
         try:
             r = requests.get(url, auth=auth, proxies=proxies, timeout=10, verify=ssl_verify)
             r.raise_for_status()
@@ -253,6 +259,7 @@ class RabbitMq(CollectorBase):
             self._get_metrics(data_line, object_type)
 
     def _get_metrics(self, data, object_type):
+        # Converting data to metrics
         tags = []
         tag_list = TAGS_MAP[object_type]
         for t in tag_list:
@@ -266,6 +273,7 @@ class RabbitMq(CollectorBase):
                       "You can specify the regular regression in conf.".format(e, t)
                 self.log_warn(msg)
 
+        # Regulating tag
         tags = str(tags)[1:-1].replace("'", "").replace(",", "")
         for attribute, metric_name, operation in ATTRIBUTES[object_type]:
             # Walk down through the data path, e.g. foo/bar => d['foo']['bar']
@@ -280,6 +288,7 @@ class RabbitMq(CollectorBase):
                 value = None
 
             ts = time.time()
+            # If value exists, send metrics to OpenTSDB
             if value is not None:
                 try:
                     self._readq.nput('rabbitmq.%s.%s %d %d %s' %
