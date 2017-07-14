@@ -93,9 +93,10 @@ class RabbitMqException(Exception):
 class RabbitMq(CollectorBase):
     def __init__(self, config, logger, readq):
         super(RabbitMq, self).__init__(config, logger, readq)
+        self.base_url, self.max_detailed, self.specified, self.auth, self.ssl_verify = self._get_config()
 
     def __call__(self):
-        self.check()
+        self.check(self.base_url, self.max_detailed, self.specified, self.auth, self.ssl_verify)
 
     def _get_config(self):
         # make sure 'rabbitmq_api_url' is present and get parameters
@@ -150,8 +151,7 @@ class RabbitMq(CollectorBase):
             vhosts = [v['name'] for v in vhosts_response]
         return vhosts
 
-    def check(self):
-        base_url, max_detailed, specified, auth, ssl_verify = self._get_config()
+    def check(self, base_url, max_detailed, specified, auth, ssl_verify):
         try:
             # Generate metrics from the status API.
             self.get_stats(base_url, QUEUE_TYPE, max_detailed[QUEUE_TYPE], specified[QUEUE_TYPE],
@@ -326,7 +326,6 @@ class RabbitMq(CollectorBase):
             aliveness_url = urlparse.urljoin(base_url, path)
             # aliveness_proxy = self.get_instance_proxy(instance, aliveness_url)
             aliveness_response = self._get_data(aliveness_url, auth=auth, ssl_verify=ssl_verify)
-            message = u"Response from aliveness API: %s" % aliveness_response
 
             if aliveness_response.get('status') == 'ok':
                 status = 0
