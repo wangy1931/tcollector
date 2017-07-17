@@ -15,7 +15,7 @@ class ResponseTime(CollectorBase):
                 ts = time.clock()
                 try:
                     requests.get(self.urls[service]['url'], timeout=int(self.urls[service]['timeout']))
-                    self.response_time[service] = 100 * (time.clock() - ts)
+                    self.response_time[service] = time.clock() - ts
                     self._readq.nput("%s.respondtime %s %s" %
                                      (service, int(time.time()), self.response_time[service]))
                     self._readq.nput("%s.respondtime.state %s %s" %
