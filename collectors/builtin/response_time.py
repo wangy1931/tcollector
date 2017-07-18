@@ -12,16 +12,17 @@ class ResponseTime(CollectorBase):
     def __call__(self):
         if len(self.urls):
             for service in self.urls:
-                ts = time.clock()
+                ts = time.time()
                 try:
-                    requests.get(self.urls[service]['url'], timeout=int(self.urls[service]['timeout']))
-                    self.response_time[service] = time.clock() - ts
-                    self._readq.nput("%s.respondtime %s %s" %
-                                     (service, int(time.time()), self.response_time[service]))
-                    self._readq.nput("%s.respondtime.state %s %s" %
-                                     (service, int(time.time()), "0"))
+                    tag = "url=%s" % service
+                    requests.get(self.urls[service]['url'], timeout=int(self.urls[service]['timeout_sec']))
+                    self.response_time[service] = time.time() - ts
+                    self._readq.nput("respondtime.duration %s %s %s" %
+                                     (int(time.time()), self.response_time[service], tag))
+                    self._readq.nput("respondtime.state %s %s %s" %
+                                     (int(time.time()), "0", tag))
                 except Exception:
-                    self._readq.nput("%s.respondtime %s %s" %
-                                     (service, int(time.time()), str(self.urls[service]['timeout'])))
-                    self._readq.nput("%s.respondtime.state %s %s" %
-                                     (service, int(time.time()), "1"))
+                    self._readq.nput("respondtime.duration %s %s %s" %
+                                     (int(time.time()), str(self.urls[service]['timeout_sec']), tag))
+                    self._readq.nput("respondtime.state %s %s %s" %
+                                     (int(time.time()), "1", tag))
