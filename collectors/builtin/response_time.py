@@ -1,6 +1,7 @@
 import requests
 import time
 from collectors.lib.collectorbase import CollectorBase
+from collectors.lib.utils import remove_invalid_characters
 
 
 class ResponseTime(CollectorBase):
@@ -14,7 +15,7 @@ class ResponseTime(CollectorBase):
             for service in self.urls:
                 ts = time.time()
                 try:
-                    tag = "url=%s" % service
+                    tag = "url=%s" % remove_invalid_characters(service)
                     requests.get(self.urls[service]['url'], timeout=int(self.urls[service]['timeout_sec']))
                     self.response_time[service] = time.time() - ts
                     self._readq.nput("respondtime.duration %s %s %s" %
