@@ -15,7 +15,7 @@ class ResponseTime(CollectorBase):
                 ts = time.time()
                 try:
                     tag = "url=%s" % service
-                    requests.get(self.urls[service]['url'], timeout=int(self.urls[service]['timeout']))
+                    requests.get(self.urls[service]['url'], timeout=int(self.urls[service]['timeout_sec']))
                     self.response_time[service] = time.time() - ts
                     self._readq.nput("respondtime.duration %s %s %s" %
                                      (int(time.time()), self.response_time[service], tag))
@@ -23,6 +23,6 @@ class ResponseTime(CollectorBase):
                                      (int(time.time()), "0", tag))
                 except Exception:
                     self._readq.nput("respondtime.duration %s %s %s" %
-                                     (int(time.time()), str(self.urls[service]['timeout']), tag))
+                                     (int(time.time()), str(self.urls[service]['timeout_sec']), tag))
                     self._readq.nput("respondtime.state %s %s %s" %
                                      (int(time.time()), "1", tag))
