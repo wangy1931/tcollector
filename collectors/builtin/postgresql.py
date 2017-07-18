@@ -337,14 +337,10 @@ class Postgresql(CollectorBase):
             self.dbname = 'postgres'
 
     def __call__(self):
-        self.check()
-
-    def check(self):
         count_metrics = True
         database_size_metrics = True
         function_metrics = True
         connect_fct, interface_error, programming_error = self._get_pg_attrs()
-
         try:
             self.db = self.get_connection(self.key, self.host, self.port, self.user, self.password, self.dbname,
                                           connect_fct)
@@ -359,6 +355,13 @@ class Postgresql(CollectorBase):
                                           connect_fct, use_cached=False)
             self._collect_stats(self.key, self.db, self.relations, function_metrics, count_metrics,
                                 database_size_metrics, interface_error, programming_error)
+
+        if self.db is not None:
+            try:
+                # commit to close the current query transaction
+                self.db.commit()
+            except Exception as e:
+                self.log_warn("Unable to commit: {0}".format(e))
 
     def _build_relations_config(self, relations):
         """Builds a dictionary from relations configuration while maintaining compatibility
