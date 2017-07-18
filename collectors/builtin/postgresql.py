@@ -1,10 +1,8 @@
-#!/usr/local/bin/python2
-
+#!/usr/bin/env python
 # setup 1: create user
 # create user cloudwiz_user with password 'cloudwiz_pass';
 # grant SELECT ON pg_stat_database to cloudwiz_user;
 
-import os
 import time
 import socket
 
@@ -15,7 +13,6 @@ except ImportError:
 
 CONNECT_TIMEOUT = 2  # seconds
 
-from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
 
 TABLE_COUNT_LIMIT = 200
@@ -37,7 +34,7 @@ def psycopg2_connect(*args, **kwargs):
     return psycopg2.connect(*args, **kwargs)
 
 
-class PostgresqlEnhanced(CollectorBase):
+class Postgresql(CollectorBase):
     DB_METRICS = {
         'descriptors': [
             ('datname', 'db')
@@ -310,7 +307,7 @@ class PostgresqlEnhanced(CollectorBase):
     }
 
     def __init__(self, config, logger, readq):
-        super(PostgresqlEnhanced, self).__init__(config, logger, readq)
+        super(Postgresql, self).__init__(config, logger, readq)
         self.dbs = {}
         self.versions = {}
         self.instance_metrics = {}
@@ -325,10 +322,7 @@ class PostgresqlEnhanced(CollectorBase):
         if psycopg2 is None:
             raise Exception("error: Python module 'psycopg2' is missing")  # Ask tcollector to not respawn us
 
-        sockdir = self.find_sockdir()
         self.host = self.get_config('host')
-        if self.host:
-            sockdir = self.host
         self.port = self.get_config('port', '5432')
         self.user = self.get_config('user', 'cloudwiz_user')
         self.password = self.get_config('password', 'cloudwiz_pass')
@@ -342,15 +336,6 @@ class PostgresqlEnhanced(CollectorBase):
         if self.dbname is None:
             self.dbname = 'postgres'
 
-        if not sockdir:  # Nothing to monitor
-            raise Exception("error: Can't find postgresql socket file")  # Ask tcollector to not respawn us
-
-        try:
-            self.db = self.postgres_connect(sockdir)
-            self.db.autocommit = True
-        except Exception:
-            self.log_error("Failed to connect")
-
     def __call__(self):
         self.check()
 
@@ -358,16 +343,22 @@ class PostgresqlEnhanced(CollectorBase):
         count_metrics = True
         database_size_metrics = True
         function_metrics = True
-        version = self._get_version(self.key, self.db)
-        self.log_info("Running check against version %s" % version)
         connect_fct, interface_error, programming_error = self._get_pg_attrs()
 
-        # Collecting state
         try:
+            self.db = self.get_connection(self.key, self.host, self.port, self.user, self.password, self.dbname,
+                                          connect_fct)
+            version = self._get_version(self.key, self.db)
+            self.log_info("Running check against version %s" % version)
             self._collect_stats(self.key, self.db, self.relations, function_metrics, count_metrics,
                                 database_size_metrics, interface_error, programming_error)
-        except Exception as e:
-            self.log_error(e)
+        except Exception:
+            self.log_error("Failed to connect")
+            self.log_info("Resetting the connection")
+            self.db = self.get_connection(self.key, self.host, self.port, self.user, self.password, self.dbname,
+                                          connect_fct, use_cached=False)
+            self._collect_stats(self.key, self.db, self.relations, function_metrics, count_metrics,
+                                database_size_metrics, interface_error, programming_error)
 
     def _build_relations_config(self, relations):
         """Builds a dictionary from relations configuration while maintaining compatibility
@@ -634,24 +625,37 @@ class PostgresqlEnhanced(CollectorBase):
     def _is_9_4_or_above(self, key, db):
         return self._is_above(key, db, [9, 4, 0])
 
-    def find_sockdir(self):
-        """Returns a path to PostgreSQL socket file to monitor."""
-        for dir in SEARCH_DIRS:
-            for dirpath, dirnames, dirfiles in os.walk(dir, followlinks=True):
-                for name in dirfiles:
-                    # ensure selection of PostgreSQL socket only
-                    if (utils.is_sockfile(os.path.join(dirpath, name))
-                        and "PGSQL" in name):
-                        return (dirpath)
+    def get_connection(self, key, host, port, user, password, dbname, connect_fct, use_cached=True):
+        "Get and memoize connections to instances"
+        if key in self.dbs and use_cached:
+            return self.dbs[key]
 
-    def postgres_connect(self, sockdir):
-        try:
-            connection = psycopg2.connect("host='%s' user='%s' password='%s' "
-                                    "connect_timeout='%s' dbname=%s"
-                                          % (sockdir, self.user, self.password,
-                                       CONNECT_TIMEOUT, self.dbname))
-            self._readq.nput("postgresql.state %i 0" % time.time())
-            return connection
-        except (EnvironmentError, EOFError, RuntimeError, socket.error), e:
+        elif host != "" and user != "":
+            try:
+                if host == 'localhost' and password == '':
+                    # Use ident method
+                    connection = connect_fct("user=%s dbname=%s" % (user, dbname))
+                elif port != '':
+                    connection = connect_fct(host=host, port=port, user=user,
+                                             password=password, database=dbname)
+                elif host.startswith('/'):
+                    # If the hostname starts with /, it's probably a path
+                    # to a UNIX socket. This is similar behaviour to psql
+                    connection = connect_fct(unix_sock=host, user=user,
+                                             password=password, database=dbname)
+                else:
+                    connection = connect_fct(host=host, user=user, password=password,
+                                             database=dbname)
+                self._readq.nput("postgresql.state %i 0" % time.time())
+            except Exception as e:
+                self._readq.nput("postgresql.state %i 1" % time.time())
+                message = u'Error establishing postgres connection: %s' % (str(e))
+                self.log_error(message)
+        else:
+            if not host:
+                raise Exception("Please specify a Postgres host to connect to.")
+            elif not user:
+                raise Exception("Please specify a user to connect to Postgres as.")
             self._readq.nput("postgresql.state %i 1" % time.time())
-            self.log_error("Couldn't connect to DB :%s" % (e))
+        self.dbs[key] = connection
+        return connection
