@@ -646,10 +646,12 @@ class PostgresqlEnhanced(CollectorBase):
 
     def postgres_connect(self, sockdir):
         try:
-            return psycopg2.connect("host='%s' user='%s' password='%s' "
+            connection = psycopg2.connect("host='%s' user='%s' password='%s' "
                                     "connect_timeout='%s' dbname=%s"
-                                    % (sockdir, self.user, self.password,
+                                          % (sockdir, self.user, self.password,
                                        CONNECT_TIMEOUT, self.dbname))
+            self._readq.nput("postgresql.state %i 0" % time.time())
+            return connection
         except (EnvironmentError, EOFError, RuntimeError, socket.error), e:
             self._readq.nput("postgresql.state %i 1" % time.time())
             self.log_error("Couldn't connect to DB :%s" % (e))
