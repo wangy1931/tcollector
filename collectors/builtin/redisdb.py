@@ -12,6 +12,7 @@ class Redisdb(CollectorBase):
     REPL_KEY = 'master_link_status'
     LINK_DOWN_KEY = 'master_link_down_since_seconds'
     db_key_pattern = re.compile(r'^db\d+')
+    subkeys = ['keys', 'expires']
     slave_key_pattern = re.compile(r'^slave\d+')
     GAUGE_KEYS = {
         # Append-only metrics
