@@ -11,6 +11,7 @@ class Redisdb(CollectorBase):
     MAX_SLOW_ENTRIES_KEY = "slowlog-max-len"
     REPL_KEY = 'master_link_status'
     LINK_DOWN_KEY = 'master_link_down_since_seconds'
+    subkeys = ['keys', 'expires']
     db_key_pattern = re.compile(r'^db\d+')
     slave_key_pattern = re.compile(r'^slave\d+')
     GAUGE_KEYS = {
