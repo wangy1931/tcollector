@@ -152,13 +152,11 @@ class Redisdb(CollectorBase):
         try:
             info = conn.info()
             tags = sorted(tags + ["redis_role=%s" % info["role"]])
-            self.send_info_guage('redis.can_connect', "0")
+            self.send_info_guage('redis.state', "0")
         except ValueError:
-            self.send_info_guage('redis.can_connect', "1")
-            raise
+            self.send_info_guage('redis.state', "1")
         except Exception:
-            self.send_info_guage('redis.can_connect', "1")
-            raise
+            self.send_info_guage('redis.state', "1")
 
         latency_ms = round((time.time() - start) * 1000, 2)
         self.send_info_guage('redis.info.latency_ms', latency_ms, tags=tags)
