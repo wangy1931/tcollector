@@ -1,10 +1,8 @@
-
 from collectors.lib.collectorbase import CollectorBase
 from collections import defaultdict
 import re
 import time
 import redis
-
 
 class Redisdb(CollectorBase):
     DEFAULT_MAX_SLOW_ENTRIES = 128
@@ -20,32 +18,26 @@ class Redisdb(CollectorBase):
         'aof_rewrite_in_progress':      'redis.aof.rewrite',
         'aof_current_size':             'redis.aof.size',
         'aof_buffer_length':            'redis.aof.buffer_length',
-
         # Network
         'connected_clients':            'redis.net.clients',
         'connected_slaves':             'redis.net.slaves',
         'rejected_connections':         'redis.net.rejected',
-
         # clients
         'blocked_clients':              'redis.clients.blocked',
         'client_biggest_input_buf':     'redis.clients.biggest_input_buf',
         'client_longest_output_list':   'redis.clients.longest_output_list',
-
         # Keys
         'evicted_keys':                 'redis.keys.evicted',
         'expired_keys':                 'redis.keys.expired',
-
         # stats
         'latest_fork_usec':             'redis.perf.latest_fork_usec',
         'bytes_received_per_sec':       'redis.bytes_received_per_sec',
         'bytes_sent_per_sec':           'redis.bytes_sent_per_sec',
         # Note: 'bytes_received_per_sec' and 'bytes_sent_per_sec' are only
         # available on Azure Redis
-
         # pubsub
         'pubsub_channels':              'redis.pubsub.channels',
         'pubsub_patterns':              'redis.pubsub.patterns',
-
         # rdb
         'rdb_bgsave_in_progress':       'redis.rdb.bgsave',
         'rdb_changes_since_last_save':  'redis.rdb.changes_since_last',
@@ -124,12 +116,10 @@ class Redisdb(CollectorBase):
             except Exception :
                 self.log_error("You need a redis library that supports authenticated connections. Try sudo easy_install redis.")
                 self.send_info_guage("redis.state","1")
-
         return self.connections[key]
 
     def _get_tags(self, custom_tags):
         tags = set(custom_tags or [])
-
         if 'unix_socket_path' in self.conf_dict:
             tags_to_add = [
                 "redis_host=%s" % self.conf_dict.get("unix_socket_path"),
@@ -140,9 +130,7 @@ class Redisdb(CollectorBase):
                 "redis_host=%s" % self.conf_dict.get('host'),
                 "redis_port=%s" % self.conf_dict.get('port')
             ]
-
         tags = sorted(tags.union(tags_to_add))
-
         return tags
 
     def _check_db(self, custom_tags=None):
@@ -157,7 +145,6 @@ class Redisdb(CollectorBase):
             self.send_info_guage('redis.state', "1")
         except Exception:
             self.send_info_guage('redis.state', "1")
-
         latency_ms = round((time.time() - start) * 1000, 2)
         self.send_info_guage('redis.info.latency_ms', latency_ms, tags=tags)
 
