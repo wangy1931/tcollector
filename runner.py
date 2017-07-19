@@ -21,6 +21,8 @@ from Queue import Empty
 import ssl
 import common_utils
 
+log = logging.getLogger(__name__)
+
 # global variables._
 COLLECTORS = {}
 DEFAULT_LOG = '/var/log/cloudwiz-collector.log'
@@ -138,6 +140,34 @@ def main_loop(readq, options, configs, collectors):
 
         end = time.time()
         sleep_reasonably(loop_interval, start, end)
+
+
+def get_proxy(agentconfig):
+    proxy_settings = {}
+
+    # First we read the proxy configuration from datadog.conf
+    proxy_host = agentconfig.get('base', 'proxy_host')
+    if proxy_host is '':
+        log.info('No specific proxy host dignated.')
+        return None
+    if proxy_host is not None:
+        proxy_settings['host'] = proxy_host
+        try:
+            proxy_settings['port'] = int(agentconfig.get('base', 'proxy_port', 3128))
+        except ValueError:
+            log.error('Proxy port must be an Integer. Defaulting it to 3128')
+            proxy_settings['port'] = 3128
+
+        proxy_settings['user'] = agentconfig.get('base', 'proxy_user', '')
+        if proxy_settings['user'] is '':
+            proxy_settings['user'] = None
+            proxy_settings['password'] = None
+            log.info('No authorization assigned')
+            return proxy_settings
+        proxy_settings['password'] = agentconfig.get('base', 'proxy_password', '')
+        log.debug("Proxy Settings: %s:*****@%s:%s", proxy_settings['user'],
+                  proxy_settings['host'], proxy_settings['port'])
+        return proxy_settings
 
 
 def load_runner_conf():
@@ -594,6 +624,8 @@ class Sender(threading.Thread):
         self.byteSize = 0
         self.blacklisted_hosts = set()
         random.shuffle(self.hosts)
+        runner_config = load_runner_conf()
+        self.proxy = get_proxy(runner_config)
 
     def shutdown(self):
         LOG.info("signaled sender thread shutdown.")
@@ -713,6 +745,15 @@ class Sender(threading.Thread):
             protocol = "https"
         else:
             protocol = "http"
+
+        if self.proxy is not None:
+            self.proxy['http'] = "%s:%s" % (self.proxy['host'], self.proxy['port'])
+            self.proxy['https'] = "%s:%s" % (self.proxy['host'], self.proxy['port'])
+            urllib2.install_opener(
+                urllib2.build_opener(
+                    urllib2.ProxyHandler(self.proxy)
+                )
+            )
         req = urllib2.Request("%s://%s:%s/api/put?details" % (
             protocol, self.host, self.port))
         if self.http_username and self.http_password:
