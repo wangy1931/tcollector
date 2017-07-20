@@ -23,6 +23,7 @@ def get_comman_dict():
     tail_files = "  tail_files: %s" % common.get('conf', 'tail_files'),
     multiline_negate = "  multiline.negate: %s" % common.get('conf', 'multiline.negate'),
     multiline_match = "  multiline.match: %s" % common.get('conf', 'multiline.match'),
+    close_inactive= "  close_inactive: %s" % common.get('conf', 'close_inactive'),
     )
 def get_user_conf():
     user =load_runner_conf(runner_config_path+'/user.conf')
