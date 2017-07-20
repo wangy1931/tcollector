@@ -8,6 +8,7 @@ rpm -iv --force /tmp/pyhs/*.rpm
 
 ## 安装 pyhs2
 下载
+wget https://pypi.python.org/packages/2b/4a/233721f6c6afeed5a2034f617f120fa646da935039f08e67ab8dc008a3e6/six-1.7.3.tar.gz#md5=784c6e5541c3c4952de9c0a966a0a80b
 wget https://pypi.python.org/packages/a3/ea/84a41e03f1ab14fb314c8bcf1c451090efa14c5cdfb9797d1079f502b54e/thrift-0.10.0.zip#md5=76bb768a210257dd203923110042e560
 wget https://pypi.python.org/packages/8e/2c/45dae93d666aea8492678499e0999269b4e55f1829b1e4de5b8204706ad9/sasl-0.2.1.tar.gz#md5=ca093d9a3d6f20b79b964a5e5add0202
 wget https://pypi.python.org/packages/fd/12/151a1347077c0aa1c8c6b4a0f2d41a315f544e1b0f9cb41ff982c78cb2f8/pyhs2-0.6.0.tar.gz#md5=36fb0fda462c24e3bc57563685ef0ed6
