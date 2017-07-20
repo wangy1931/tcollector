@@ -396,6 +396,10 @@ abort_if_failed 'failed to copy startup scripts'
 log_info "set up filebeat"
 yes | cp -f -r "${workspace_folder}/${filebeat_folder}" "${agent_install_folder}"
 yes | cp -f "${basedir}/filebeat.yml" "${agent_install_folder}/${filebeat_folder}"
+yes | cp -f "${basedir}/filebeat_template.yml" "${agent_install_folder}/${filebeat_folder}"
+yes | cp -f "${basedir}/common.conf" "${agent_install_folder}/${filebeat_folder}"
+yes | cp -f "${basedir}/user.conf" "${agent_install_folder}/${filebeat_folder}"
+yes | cp -f "${basedir}/filebeat_conf.py" "${agent_install_folder}/${filebeat_folder}"
 yes | cp -f "${basedir}/filebeat.startup.sh" "${agent_install_folder}/${filebeat_folder}"
 abort_if_failed "failed to copy ${workspace_folder}/${filebeat_folder} to ${agent_install_folder}"
 ln -s -f -T ${agent_install_folder}/${filebeat_folder} ${agent_install_folder}/filebeat
