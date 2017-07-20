@@ -17,7 +17,7 @@ def get_comman_dict():
     return dict(
     input_type="  input_type: %s" % common.get('conf', 'input_type'),
     fileds_orgid = "  fields.orgid: %s" % common.get('conf', 'fields.orgid'),
-    fileds_sysid = "  fields.sysid': %s" % common.get('conf', 'fields.sysid'),
+    fileds_sysid = "  fields.sysid: %s" % common.get('conf', 'fields.sysid'),
     fileds_token = "  fields.token: %s" % common.get('conf', 'fields.token'),
     ields_under_root = "  ields_under_root: %s" % common.get('conf', 'ields_under_root'),
     tail_files = "  tail_files: %s" % common.get('conf', 'tail_files'),
