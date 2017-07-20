@@ -23,8 +23,6 @@ export PATH
 
 name="filebeat"
 
-[ -r /etc/default/$name ] && . /etc/default/$name
-
 agent="$FB_HOME/filebeat"
 args="-c $FB_HOME/filebeat.yml"
 test_args="-e -configtest"

@@ -12,9 +12,10 @@ class Hive(CollectorBase):
         self.user = self.get_config("user", 'root')
         self.password = self.get_config("password", None)
         self.host = self.get_config("host", 'localhost')
-        self.port = self.get_config("port", 10000)
+        self.port = int(self.get_config("port", 10000))
         self.database = self.get_config("database", 'default')
-        self.timeout = self.get_config("timeout", 2000)
+        self.timeout = int(self.get_config("timeout", 2000))
+        self.conn = None
 
     def __call__(self):
         try:
@@ -35,4 +36,5 @@ class Hive(CollectorBase):
             self.log_error(e)
 
         finally:
-            self.conn.close()
+            if self.conn is not None:
+                self.conn.close()
