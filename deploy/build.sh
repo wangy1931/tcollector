@@ -404,8 +404,9 @@ yes | cp -f "${basedir}/filebeat.startup.sh" "${agent_install_folder}/${filebeat
 abort_if_failed "failed to copy ${workspace_folder}/${filebeat_folder} to ${agent_install_folder}"
 ln -s -f -T ${agent_install_folder}/${filebeat_folder} ${agent_install_folder}/filebeat
 abort_if_failed "failed to create/update symlink ${agent_install_folder}/filebeat"
-sed -i "s/<basedir>/${agent_install_folder_escaped}/g" "${agent_install_folder}/filebeat/filebeat.yml"
-abort_if_failed "failed to edit ${agent_install_folder}/filebeat/filebeat.yml"
+#sed -i "s/<basedir>/${agent_install_folder_escaped}/g" "${agent_install_folder}/filebeat/filebeat.yml"
+sed -i "s/<basedir>/${agent_install_folder_escaped}/g" "${agent_install_folder}/filebeat/filebeat_template.yml"
+abort_if_failed "failed to edit ${agent_install_folder}/filebeat/filebeat_template.yml"
 log_info "finish setting up filebeat"
 
 log_info "set up lib folder"
