@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python2
 
 import os
 import signal
@@ -146,10 +146,12 @@ def get_proxy(agentconfig):
     proxy_settings = {}
 
     # First we read the proxy configuration from datadog.conf
-    proxy_host = agentconfig.get('base', 'proxy_host')
-    if proxy_host is '':
+    try:
+        proxy_host = agentconfig.get('base', 'proxy_host', '')
+    except Exception:
         log.info('No specific proxy host dignated.')
         return None
+
     if proxy_host is not None:
         proxy_settings['host'] = proxy_host
         try:
