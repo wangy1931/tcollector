@@ -147,7 +147,7 @@ def get_proxy(agentconfig):
 
     # First we read the proxy configuration from datadog.conf
     try:
-        proxy_host = agentconfig.get('base', 'proxy_host', '')
+        proxy_host = agentconfig.get('base', 'proxy_host')
     except Exception:
         log.info('No specific proxy host dignated.')
         return None
@@ -159,18 +159,9 @@ def get_proxy(agentconfig):
         except ValueError:
             log.error('Proxy port must be an Integer. Defaulting it to 3128')
             proxy_settings['port'] = 3128
-
-        proxy_settings['user'] = agentconfig.get('base', 'proxy_user', '')
-        if proxy_settings['user'] is '':
-            proxy_settings['user'] = None
-            proxy_settings['password'] = None
-            log.info('No authorization assigned')
-            return proxy_settings
-        proxy_settings['password'] = agentconfig.get('base', 'proxy_password', '')
-        log.debug("Proxy Settings: %s:*****@%s:%s", proxy_settings['user'],
+        log.debug("Proxy Settings: %s:%s",
                   proxy_settings['host'], proxy_settings['port'])
         return proxy_settings
-
 
 def load_runner_conf():
     runner_config_path = os.path.splitext(__file__)[0] + ".conf"
