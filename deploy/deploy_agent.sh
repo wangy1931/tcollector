@@ -166,10 +166,6 @@ sed -i "s/%PLATFORM%/$OS/g" ${agent_install_folder}/version.json
 abort_if_failed "failed to update PLATFORM in version.json"
 
 log_info "set filebeat home by default"
-#sed -i "s/<token>/\"${ORG_TOKEN}\"/" ${agent_install_folder}/filebeat/filebeat.yml
-#sed -i "s/<orgid>/${CLIENT_ID}/" ${agent_install_folder}/filebeat/filebeat.yml
-#sed -i "s/<sysid>/${SYSTEM_ID}/" ${agent_install_folder}/filebeat/filebeat.yml
-#sed -i "s/<log-server-host-port>/\"${METRIC_SERVER_HOST}:9906\"/" ${agent_install_folder}/filebeat/filebeat.yml
 
 sed -i "s/<token>/\"${ORG_TOKEN}\"/" ${agent_install_folder}/filebeat/common.conf
 sed -i "s/<orgid>/${CLIENT_ID}/" ${agent_install_folder}/filebeat/common.conf
