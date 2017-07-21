@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2
+#!/usr/bin/env python
 
 import os
 import signal
@@ -20,8 +20,6 @@ from Queue import Full
 from Queue import Empty
 import ssl
 import common_utils
-
-log = logging.getLogger(__name__)
 
 # global variables._
 COLLECTORS = {}
@@ -149,7 +147,7 @@ def get_proxy(agentconfig):
     try:
         proxy_host = agentconfig.get('base', 'proxy_host')
     except Exception:
-        log.info('No specific proxy host dignated.')
+        LOG.info('No specific proxy host dignated.')
         return None
 
     if proxy_host is not None:
@@ -157,9 +155,9 @@ def get_proxy(agentconfig):
         try:
             proxy_settings['port'] = int(agentconfig.get('base', 'proxy_port', 3128))
         except ValueError:
-            log.error('Proxy port must be an Integer. Defaulting it to 3128')
+            LOG.error('Proxy port must be an Integer. Defaulting it to 3128')
             proxy_settings['port'] = 3128
-        log.debug("Proxy Settings: %s:%s",
+        LOG.debug("Proxy Settings: %s:%s",
                   proxy_settings['host'], proxy_settings['port'])
         return proxy_settings
 
