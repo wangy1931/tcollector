@@ -101,6 +101,12 @@ if [ -z "${CLIENT_ID// }" ]; then
   exit 1
 fi
 
+if [ -z "${SYSTEM_ID// }" ]; then
+  echo "SYSTEM_ID env variable is not set or empty"
+  usage
+  exit 1
+fi
+
 # stop all
 if  which /etc/init.d/cloudwiz-agent >/dev/null 2>&1; then
     log_info "stop the tcollector"
@@ -160,9 +166,10 @@ sed -i "s/%PLATFORM%/$OS/g" ${agent_install_folder}/version.json
 abort_if_failed "failed to update PLATFORM in version.json"
 
 log_info "set filebeat home by default"
-sed -i "s/<token>/\"${ORG_TOKEN}\"/" ${agent_install_folder}/filebeat-1.3.1/filebeat.yml
-sed -i "s/<log-server-host-port>/\"${METRIC_SERVER_HOST}:5040\"/" ${agent_install_folder}/filebeat-1.3.1/filebeat.yml
-echo "FB_HOME=${agent_install_folder}/filebeat-1.3.1" > /etc/default/filebeat
+sed -i "s/<token>/\"${ORG_TOKEN}\"/" ${agent_install_folder}/filebeat/filebeat.yml
+sed -i "s/<orgid>/${CLIENT_ID}/" ${agent_install_folder}/filebeat/filebeat.yml
+sed -i "s/<sysid>/${SYSTEM_ID}/" ${agent_install_folder}/filebeat/filebeat.yml
+sed -i "s/<log-server-host-port>/\"${METRIC_SERVER_HOST}:9906\"/" ${agent_install_folder}/filebeat/filebeat.yml
 
 # install snmp, if needed
 if [[ "$snmp" = true ]]; then
@@ -236,11 +243,9 @@ if [ "$1" == "-update" ]; then
     yes | cp -rf ${working_folder}/conf ${agent_install_folder}/agent/collectors
     yes | rm -rf ${working_folder}/conf
     yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/agent/run ${agent_install_folder}/agent/
-    yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat-1.3.1/filebeat.yml ${agent_install_folder}/filebeat-1.3.1
-    yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat-1.3.1/filebeat.startup.sh ${agent_install_folder}/filebeat-1.3.1
+    yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat/filebeat.yml ${agent_install_folder}/filebeat
+    yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat/filebeat.startup.sh ${agent_install_folder}/filebeat
     yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/altenv/etc/supervisord.conf ${agent_install_folder}/altenv/etc/
-    echo "FB_HOME=${agent_install_folder}/filebeat-1.3.1" > /etc/default/filebeat
-    mkdir -p /var/log/filebeat
 fi
 # chown -hR "$agent_user" "${agent_install_folder}"
 # abort_if_failed "failed to change ownership of ${agent_install_folder}/download to $agent_user"

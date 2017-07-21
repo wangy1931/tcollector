@@ -108,21 +108,16 @@ def remove_invalid_characters(str):
         return str
 
 
-def get_java_pid_and_user_by_pname(pname_pattern_compiled):
-    # verified for both front-running and daemon type process
-    all_java_processes = subprocess.check_output(['jps']).split("\n")
-    for pid_space_name in all_java_processes:
-        m = re.search(pname_pattern_compiled, pid_space_name)
-        if m is not None:
-            pid = m.group("pid")
-            user_qstr_lines = "ps -p %s -o ruser | wc -l" % pid
-            lines = int(subprocess.check_output(user_qstr_lines, shell=True).split("\n")[0])
-            if lines >= 2:
-                user_qstr = "ps -p %s -o ruser | tail -n 1" % pid
-                puser = subprocess.check_output(user_qstr, shell=True).split("\n")[0]
-                return long(m.group("pid")), puser
-            else:
-                return long(m.group("pid")), None
+
+def get_pid_and_user_by_pname(process_unique_string):
+    commond_line = "ps -ef | grep %s | awk '{print $1\",\"$2}'" % process_unique_string
+    pid_user_cmds = subprocess.check_output(commond_line, shell=True).split('\n')
+
+    for pid_user_cmd in pid_user_cmds:
+        if pid_user_cmd != '' and 'grep' not in pid_user_cmd:
+            pid_user_info_list = pid_user_cmd.split(",")
+            return (pid_user_info_list[0]),pid_user_info_list[1]
+
     return None, None
 
 
@@ -168,3 +163,4 @@ class TestLogger(object):
 
     def exception(self, msg, *args, **kwargs):
         sys.stderr.write("ERROR: " + msg % args)
+
