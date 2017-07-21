@@ -166,10 +166,13 @@ sed -i "s/%PLATFORM%/$OS/g" ${agent_install_folder}/version.json
 abort_if_failed "failed to update PLATFORM in version.json"
 
 log_info "set filebeat home by default"
-sed -i "s/<token>/\"${ORG_TOKEN}\"/" ${agent_install_folder}/filebeat/filebeat.yml
-sed -i "s/<orgid>/${CLIENT_ID}/" ${agent_install_folder}/filebeat/filebeat.yml
-sed -i "s/<sysid>/${SYSTEM_ID}/" ${agent_install_folder}/filebeat/filebeat.yml
-sed -i "s/<log-server-host-port>/\"${METRIC_SERVER_HOST}:9906\"/" ${agent_install_folder}/filebeat/filebeat.yml
+
+sed -i "s/<token>/\"${ORG_TOKEN}\"/" ${agent_install_folder}/filebeat/common.conf
+sed -i "s/<orgid>/${CLIENT_ID}/" ${agent_install_folder}/filebeat/common.conf
+sed -i "s/<sysid>/${SYSTEM_ID}/" ${agent_install_folder}/filebeat/common.conf
+sed -i "s/<sysid>/${SYSTEM_ID}/" ${agent_install_folder}/filebeat/filebeat_template.yml
+sed -i "s/<orgid>/${CLIENT_ID}/" ${agent_install_folder}/filebeat/filebeat_template.yml
+sed -i "s/<log-server-host-port>/\"${METRIC_SERVER_HOST}:9906\"/" ${agent_install_folder}/filebeat/filebeat_template.yml
 
 # install snmp, if needed
 if [[ "$snmp" = true ]]; then
@@ -243,7 +246,8 @@ if [ "$1" == "-update" ]; then
     yes | cp -rf ${working_folder}/conf ${agent_install_folder}/agent/collectors
     yes | rm -rf ${working_folder}/conf
     yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/agent/run ${agent_install_folder}/agent/
-    yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat/filebeat.yml ${agent_install_folder}/filebeat
+#    yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat/filebeat.yml ${agent_install_folder}/filebeat
+    yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat/user.conf ${agent_install_folder}/filebeat
     yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat/filebeat.startup.sh ${agent_install_folder}/filebeat
     yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/altenv/etc/supervisord.conf ${agent_install_folder}/altenv/etc/
 fi
