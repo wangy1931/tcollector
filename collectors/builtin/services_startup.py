@@ -15,10 +15,9 @@
 """Service startup stats for TSDB"""
 
 import time
-import re
-import requests
-from Queue import Queue
+import ast
 from subprocess import Popen, PIPE, CalledProcessError, STDOUT
+
 
 from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
@@ -38,17 +37,27 @@ class ServicesStartup(CollectorBase):
 
     def __init__(self, config, logger, readq):
         super(ServicesStartup, self).__init__(config, logger, readq)
-        self.services = self.get_config('services', 'alertd, datanode').split(',')
+        self.initialize = True
+        self.last_started_services = []
+        self.curr_started_services = []
+        try:
+            self.services = ast.literal_eval(self.get_config("services"))
+            self.last_started_services = self.services
+        except:
+            self.log_warn("please rewrite services config")
+            self.services = self.get_config('services', 'alertd, datanode').split(',')
 
     def __call__(self):
         try:
             p = Popen('ps -eo pid,lstart,cmd', shell=True, stdout=PIPE, stderr=STDOUT)
             for line in p.stdout.readlines():
                 self.process(line)
-            
+
+            self.initialize = False
             retval = p.wait()
             if retval:
                 raise CalledProcessError(ret, "ps -eo pid,lstart,cmd", "ps returned code %i" % retval)
+            self.swap()
         except OSError as e1:
             self.log_exception("ps -eo pid,lstart,cmd fails. [%s]", e1)
             return
@@ -60,19 +69,19 @@ class ServicesStartup(CollectorBase):
     def process(self, line):
         for service in self.services:
             service = service.strip()
-	    if service in line:
+            if service in line:
+                self.curr_started_services.append(service)
                 tokens = line.split()
                 time_str="%s %s %s %s"%(tokens[2], tokens[3], tokens[4], tokens[5])
                 d = time.strptime(time_str, "%b %d %H:%M:%S %Y")
                 startup_sec = int(time.mktime(d))
 
-                service_tag = "service=%s.%s"%(tokens[0], service)
+                service_tag = "service=%s.%s"%(tokens[0], utils.remove_invalid_characters(service))
                 self.print_metric(startup_sec, startup_sec, service_tag)
 
-if __name__ == "__main__":
-    from Queue import Queue
-    from collectors.lib.utils import TestQueue
-    
-    inst = ServicesStartup(None, None, TestQueue())
-    inst()
- 
+    def swap(self):
+        stop_services = [item for item in self.last_started_services if item not in self.curr_started_services]
+        for service in stop_services:
+            self._readq.nput("service.stopAtSec %d %s %s" % (int(time.time()), 1, "service=%s"% utils.remove_invalid_characters(service)))
+        self.last_started_services = self.curr_started_services
+        self.curr_started_services = []

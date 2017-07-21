@@ -1,97 +1,105 @@
-################### Filebeat Configuration Example #########################
+###################### Filebeat Configuration Example #########################
 
-############################# Filebeat ######################################
-filebeat:
-  # List of prospectors to fetch data.
-  prospectors:
-    # Each - is a prospector. Below are the prospector specific configurations
-    -
-      paths:
-        - /opt/cloudwiz-agent/altenv/var/log/collector.log
+# This file is an example configuration file highlighting only the most common
+# options. The filebeat.full.yml file from the same directory contains all the
+# supported options with more comments. You can use it as a reference.
+#
+# You can find the full configuration reference here:
+# https://www.elastic.co/guide/en/beats/filebeat/index.html
 
-      input_type: log
-      document_type: collector
-      fields:
-        token: "571145dfa339dc049c7467475cf82b1b115bca00"
-        org: "<org>"
-      fields_under_root: true
-      close_older: 2h
-      multiline:
-        pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3} '
-        negate: true
-        match: after
-    # Additional prospector
-    #-
-      # Configuration to use stdin input
-      #input_type: stdin
+#=========================== Filebeat prospectors =============================
 
-############################# Output ##########################################
+filebeat.prospectors:
+
+# Each - is a prospector. Most options can be set at the prospector level, so
+# you can use different prospectors for various configurations.
+# Below are the prospector specific configurations.
+
+- input_type: log
+
+  # Paths that should be crawled and fetched. Glob based paths.
+  paths:
+    - <basedir>/altenv/var/log/collector.log
+
+  document_type: collector
+  fields.client: <orgid>
+  fields.orgid: 2
+  fields.sysid: 15
+  fields.token: "571145dfa339dc049c7467475cf82b1b115bca00"
+  fields_under_root: true
+  close_inactive: 2h
+  tail_files: true
+  multiline.pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3} '
+  multiline.negate: true
+  multiline.match: after
+
+- input_type: log
+
+  # Paths that should be crawled and fetched. Glob based paths.
+  paths:
+    - /var/log/messages
+
+  document_type: system
+  fields.orgid: <orgid>
+  fields.sysid: <sysid>
+  fields.token: <token>
+  fields_under_root: true
+  close_inactive: 2h
+  tail_files: true
+  multiline.pattern: '^[a-zA-Z]{3}[ ]{1,2}[0-9]{1,2} [0-9]{2}:[0-9]{2}:[0-9]{2} '
+  multiline.negate: true
+  multiline.match: after
+
+
+#================================ General =====================================
+
+# The name of the shipper that publishes the network data. It can be used to group
+# all the transactions sent by a single shipper in the web interface.
+#name:
+
+# The tags of the shipper are included in their own field with each
+# transaction published.
+#tags: ["service-X", "web-tier"]
+
+# Optional fields that you can specify to add additional information to the
+# output.
+#fields:
+#  env: staging
+
+#================================ Outputs =====================================
 
 # Configure what outputs to use when sending the data collected by the beat.
 # Multiple outputs may be used.
-output:
 
-  ### Logstash as output
-  logstash:
-    # The Logstash hosts
-    hosts: [<log-server-host-port>]
+#-------------------------- Kafka output ------------------------------
+output.kafka:
+  # Array of hosts to connect to.
+  hosts: [<log-server-host-port>]
+  ssl.enabled: true
+  version: "0.10"
+  topic: 'filebeat.%{[orgid]}.%{[sysid]}'
+  partition.round_robin:
+    reachable_only: true
+  required_acks: 1
+  compression: gzip
+  max_message_bytes: 1000000
 
-    # Number of workers per Logstash host.
-    #worker: 1
 
-    # The maximum number of events to bulk into a single batch window. The
-    # default is 2048.
-    #bulk_max_size: 2048
+#================================ Logging =====================================
 
-    # Set gzip compression level.
-    #compression_level: 3
+# Sets log level. The default log level is info.
+# Available log levels are: critical, error, warning, info, debug
+#logging.level: debug
 
-    # Optional load balance the events between the Logstash hosts
-    loadbalance: true
+# At debug level, you can selectively enable logging only for some components.
+# To enable all selectors use ["*"]. Examples of other selectors are "beat",
+# "publish", "service".
+#logging.selectors: ["*"]
 
-    # Optional index name. The default index name depends on the each beat.
-    # For Packetbeat, the default is set to packetbeat, for Topbeat
-    # top topbeat and for Filebeat to filebeat.
-    #index: filebeat
-
-    tls:
-
-############################# Logging #########################################
-
-# There are three options for the log ouput: syslog, file, stderr.
-# Under Windos systems, the log files are per default sent to the file output,
-# under all other system per default to syslog.
-logging:
-
-  # Send all logging output to syslog. On Windows default is false, otherwise
-  # default is true.
-  to_syslog: false
-
-  # Write all logging output to files. Beats automatically rotate files if rotateeverybytes
-  # limit is reached.
-  to_files: true
-
-  # To enable logging to files, to_files option has to be set to true
-  files:
-    # The directory where the log files will written to.
-    path: /var/log/filebeat
-
-    # The name of the files where the logs are written to.
-    name: filebeat.log
-
-    # Configure log file size limit. If limit is reached, log file will be
-    # automatically rotated
-    rotateeverybytes: 10485760 # = 10MB
-
-    # Number of rotated log files to keep. Oldest files will be deleted first.
-    #keepfiles: 7
-
-  # Enable debug output for selected components. To enable all selectors use ["*"]
-  # Other available selectors are beat, publish, service
-  # Multiple selectors can be chained.
-  #selectors: [ ]
-
-  # Sets log level. The default log level is error.
-  # Available log levels are: critical, error, warning, info, debug
-  level: info
-
+logging.level: info
+logging.to_files: true
+logging.to_syslog: false
+logging.files:
+  path: <basedir>/altenv/var/log
+  name: filebeat.log
+  keepfiles: 4

@@ -56,12 +56,12 @@ class TopN(CollectorBase):
     def process(self, line, metric):
         if not ("COMMAND" in line and "PID" in line):
             tokens = line.split()
-            cmd = utils.remove_invalid_characters(tokens[0])
+            #cmd = utils.remove_invalid_characters(tokens[0])
             pid = tokens[1]
             #print cmd, pid, tokens[2]
             value = float(tokens[2]) # cpu or mem
             full_command = ''.join(tokens[3:len(tokens)]) # full command
-            tag = "pid_cmd=%s_%s cmd=%s"%(pid, cmd, utils.remove_invalid_characters(full_command))
+            tag = "pid_cmd=%s_%s"%(pid,utils.remove_invalid_characters(full_command))
             self.print_metric(metric, (int(time.time())), value, tag)
 
 
