@@ -25,7 +25,7 @@ filebeat.prospectors:
   fields.client: <orgid>
   fields.orgid: 2
   fields.sysid: 15
-  fields.token: "571145dfa339dc049c7467475cf82b1b115bca00"
+  fields.token: 571145dfa339dc049c7467475cf82b1b115bca00
   fields_under_root: true
   close_inactive: 2h
   tail_files: true
