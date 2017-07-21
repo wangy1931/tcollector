@@ -24,6 +24,8 @@ export PATH
 name="filebeat"
 
 agent="$FB_HOME/filebeat"
+/opt/cloudwiz-agent/altenv/bin/python2.7  /opt/cloudwiz-agent/filebeat/filebeat_conf.py
+
 args="-c $FB_HOME/filebeat.yml"
 test_args="-e -configtest"
 
