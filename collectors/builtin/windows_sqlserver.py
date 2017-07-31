@@ -2,7 +2,7 @@ import time
 import pyodbc
 from collectors.lib.collectorbase import CollectorBase
 
-class Sqlserver(CollectorBase):
+class WindowsSqlserver(CollectorBase):
     SQL = "SELECT  counter_name, cntr_value FROM sys.dm_os_performance_counters where counter_name ='%s';"
     METRICS = [
         ('sqlserver.buffer.cache_hit_ratio', 'Buffer cache hit ratio'),  # RAW_LARGE_FRACTION
@@ -18,7 +18,7 @@ class Sqlserver(CollectorBase):
     ]
 
     def __init__(self, config, logger, readq):
-        CollectorBase.__init__(self, config, logger, readq)
+        super(WindowsSqlserver, self).__init__(self, config, logger, readq)
         server=self.get_config("server")
         driver=""
         if len(pyodbc.drivers())>0:
