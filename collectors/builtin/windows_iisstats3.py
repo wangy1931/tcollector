@@ -34,12 +34,12 @@ from collectors.lib.collectorbase import CollectorBase
 
 #WMISampler = None
 
-class Iisstats3(CollectorBase):
+class WindowsIisstats3(CollectorBase):
 
     def __init__(self, config, logger, readq):
-        super(Iisstats3, self).__init__(config, logger, readq)
-        log = logging.getLogger("C:\\logs\\test.log")
-        self.WMISampler = partial(WMISampler, log)
+        super(WindowsIisstats3, self).__init__(config, logger, readq)
+        # log = logging.getLogger("C:\\logs\\test.log")
+        self.WMISampler = partial(WMISampler, logger)
 
     def __call__(self):
         metrics = self.WMISampler("Win32_PerfFormattedData_W3SVC_WebService", \
