@@ -29,10 +29,10 @@ from collectors.lib.collectorbase import CollectorBase
 import checks.system.win32 as w32
 
 
-class Iostats3(CollectorBase):
+class WindowsIostats3(CollectorBase):
 
     def __init__(self, config, logger, readq):
-        super(Iostats3, self).__init__(config, logger, readq)
+        super(WindowsIostats3, self).__init__(config, logger, readq)
 
     def __call__(self):
         io = w32.IO(self._logger)
