@@ -288,9 +288,8 @@ class Mongo3(CollectorBase):
         try:
             with utils.lower_privileges(self._logger):
                 if pymongo is None:
+                    self.log_error('can not load pymongo module')
                     self._readq.nput("mongo3.state %s %s" % (int(time.time()), '1'))
-                    print >> sys.stderr, "error: Python module `pymongo' is missing"
-                    return 13
 
                 for index, item in enumerate(CONFIG_CONN, start=0):
                     conn = pymongo.MongoClient(host=item['host'], port=item['port'])
@@ -323,7 +322,7 @@ class Mongo3(CollectorBase):
             for conn in REPLICA_CONN:
                 self.runReplSetGetStatus(conn['link'])
         except Exception as e:
-            self.log_exception('exception collecting mongodb metric \n %s',e)
+            self.log_error('exception collecting mongodb metric \n %s',e)
             self._readq.nput("mongo3.state %s %s" % (int(time.time()), '1'))
             return
         self._readq.nput("mongo3.state %s %s" % (int(time.time()), '0'))
