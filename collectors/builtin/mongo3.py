@@ -322,7 +322,9 @@ class Mongo3(CollectorBase):
 
             for conn in REPLICA_CONN:
                 self.runReplSetGetStatus(conn['link'])
-        except:
+        except Exception as e:
+            self.log_exception('exception collecting mongodb metric \n %s',e)
             self._readq.nput("mongo3.state %s %s" % (int(time.time()), '1'))
+            return
         self._readq.nput("mongo3.state %s %s" % (int(time.time()), '0'))
         sys.stdout.flush()
