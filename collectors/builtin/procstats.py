@@ -112,6 +112,10 @@ class Procstats(CollectorBase):
             # proc.meminfo
             self.f_meminfo.seek(0)
             ts = int(time.time())
+            mem_total = 0
+            mem_free = 0
+            mem_buffers = 0
+            mem_cached = 0
             for line in self.f_meminfo:
                 m = re.match("(\w+):\s+(\d+)\s+(\w+)", line)
                 if m:
@@ -121,6 +125,16 @@ class Procstats(CollectorBase):
                     else:
                         value = m.group(2)
                     self._readq.nput("proc.meminfo.%s %d %s" % (m.group(1).lower(), ts, value))
+                    if m.group(1) == 'MemTotal':
+                        mem_total = float(m.group(2)) * 1024
+                    if m.group(1) == 'MemFree':
+                        mem_free = float(m.group(2)) * 1024
+                    if m.group(1) == 'Buffers':
+                        mem_buffers = float(m.group(2)) * 1024
+                    if m.group(1) == 'Cached':
+                        mem_cached = float(m.group(2)) * 1024
+            percentused = 100 * (mem_total - mem_free - mem_buffers - mem_cached) / mem_total
+            self._readq.nput("proc.meminfo.%s %d %s" % ("percentused", ts, percentused))
 
             # proc.vmstat
             self.f_vmstat.seek(0)
