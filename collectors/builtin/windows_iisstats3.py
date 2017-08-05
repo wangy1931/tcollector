@@ -34,10 +34,10 @@ from collectors.lib.collectorbase import CollectorBase
 
 #WMISampler = None
 
-class WindowsIisstats3(CollectorBase):
+class WindowsIisstats(CollectorBase):
 
     def __init__(self, config, logger, readq):
-        super(WindowsIisstats3, self).__init__(config, logger, readq)
+        super(WindowsIisstats, self).__init__(config, logger, readq)
         # log = logging.getLogger("C:\\logs\\test.log")
         self.WMISampler = partial(WMISampler, logger)
 
@@ -139,5 +139,5 @@ class WindowsIisstats3(CollectorBase):
 
 
 if __name__ == "__main__":
-    iisstats3_inst = Iisstats3(None, None, Queue())
-    iisstats3_inst()
+    iisstats_inst = WindowsIisstats(None, None, Queue())
+    iisstats_inst()

@@ -33,33 +33,43 @@ from collectors.lib.collectorbase import CollectorBase
 
 #WMISampler = None
 
-class WindowsDfstats(CollectorBase):
+class WindowsNetstats(CollectorBase):
 
     def __init__(self, config, logger, readq):
-        super(WindowsDfstats, self).__init__(config, logger, readq)
-        # log = logging.getLogger("C:\\logs\\test.log")
+        super(WindowsNetstats, self).__init__(config, logger, readq)
         self.WMISampler = partial(WMISampler, logger)
 
     def __call__(self):
-        metrics = self.WMISampler("Win32_LogicalDisk", \
-		    ["DeviceID", \
-			 "FreeSpace", \
-			 "Size"], \
+        metrics = self.WMISampler("Win32_PerfRawData_Tcpip_NetworkInterface", \
+		    ["Name", \
+			 "BytesReceivedPersec", \
+			 "BytesSentPersec", \
+			 "BytesTotalPersec", \
+			 "CurrentBandwidth", \
+			 "OutputQueueLength", \
+			 "PacketsOutboundDiscarded", \
+			 "PacketsOutboundErrors", \
+			 "PacketsPersec", \
+			 "PacketsReceivedDiscarded", \
+			 "PacketsReceivedErrors", \
+			 "PacketsReceivedNonUnicastPersec", \
+			 "PacketsReceivedPersec", \
+			 "PacketsReceivedUnicastPersec", \
+			 "PacketsReceivedUnknown", \
+			 "PacketsSentNonUnicastPersec", \
+			 "PacketsSentPersec", \
+			 "PacketsSentUnicastPersec"], \
 			 provider="64", timeout_duration=50)
         metrics.sample()
         ts = int(time.time())
 
         for metric in metrics:
-            drive_list=str(metric.get("deviceid")).split(":")
-            if len(drive_list) >0 :
-                drive = drive_list[0]
-            else:
-                drive="C"
+            device = str(metric.get("name")).replace(" ", "-")
             for key, value in metric.iteritems():
                 if isinstance(value, numbers.Number):
-                    self._readq.nput("system.fs.%s %d %f drive=%s" % (key, ts, value, drive))
+                    self._readq.nput("system.fs.%s %d %f device=%s" % (key, ts, value, device))
 
 
 if __name__ == "__main__":
-    dfstats_inst = WindowsDfstats(None, None, Queue())
-    dfstats_inst()
+    netstats_inst = WindowsNetstats(None, None, Queue())
+    netstats_inst()

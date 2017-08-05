@@ -29,10 +29,10 @@ from collectors.lib.collectorbase import CollectorBase
 import checks.system.win32 as w32
 
 
-class WindowsProcstats3(CollectorBase):
+class WindowsProcstats(CollectorBase):
 
     def __init__(self, config, logger, readq):
-        super(WindowsProcstats3, self).__init__(config, logger, readq)
+        super(WindowsProcstats, self).__init__(config, logger, readq)
 
 
     def __call__(self):
@@ -48,5 +48,5 @@ class WindowsProcstats3(CollectorBase):
 
 
 if __name__ == "__main__":
-    procstats3_inst = Procstats3(None, None, Queue())
-    procstats3_inst()
+    procstats_inst = WindowsProcstats(None, None, Queue())
+    procstats_inst()
