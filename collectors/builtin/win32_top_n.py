@@ -57,6 +57,22 @@ class Win32TopN(CollectorBase):
             process = (id, name, cpuPct, memBytes)
             processes.append(process)
 
+        # Sort by cpu
+        tmpsorted = sorted(processes, key=lambda process: process[2], reverse=True)
+        # Take the top 5 processes with highest memory usage
+        top_n_cpu = tmpsorted[:7]
+
+        #self.log_info(top_n_cpu)
+        total_mem_B = 1000000000;
+        for p in top_n_cpu:
+            id = p[0]
+            name = utils.remove_invalid_characters(p[1])
+            cpu = p[2]
+            if name == "_Total":
+                total_mem_B = p[3]
+            elif name != "Idle":
+                self._readq.nput("cpu.topN %d %f pid_cmd=%d_%s" % (ts, cpu, id, name))
+
         # Sort by memory
         tmpsorted = sorted(processes, key=lambda process: process[3], reverse=True)
         # Take the top N processes with highest memory usage
@@ -66,9 +82,9 @@ class Win32TopN(CollectorBase):
         for p in top_n_mem:
             id = p[0]
             name = utils.remove_invalid_characters(p[1])
-            mem = p[3]
+            mem_pct = p[3] * 1.0 / total_mem_B
             if name != "_Total" and name != "Idle":
-                self._readq.nput("mem.topN %d %f pid_cmd=%d_%s" % (ts, mem, id, name))
+                self._readq.nput("mem.topN %d %f pid_cmd=%d_%s" % (ts, mem_pct, id, name))
 
 
         # Sort by cpu
