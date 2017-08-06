@@ -139,6 +139,16 @@ def summary_sender(name, tag, info, content):
     data['content'] = content
     requests.post('%s/summary?token=%s' % (metrics_server, token), json=data, headers=headers, cookies=cookies)
 
+
+def alertd_post_sender(url, data):
+    runner_config = load_runner_conf()
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+    metrics_server = runner_config.get('base', 'alertd_server_and_port')
+    token = runner_config.get('base', 'token')
+    cookies = dict(_token=token)
+    #print '%s%s?token=%s' % (metrics_server, url, token)
+    requests.post('%s%s?token=%s' % (metrics_server, url, token), json=data, headers=headers, cookies=cookies)
+
 def load_runner_conf():
     runner_config_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../..', 'runner.conf'))
     runner_config = ConfigParser.SafeConfigParser({"alertd_server_and_port": 'localhost:5001'})
