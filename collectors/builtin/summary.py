@@ -2,6 +2,7 @@ import os
 import json
 import platform
 import time
+import socket
 from time import localtime, strftime
 from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
@@ -30,18 +31,13 @@ class Summary(CollectorBase):
         self.interval = self.get_config('interval')
 
         try:
-            ip = get_ip()
+            ip = self.get_ip()
         except Exception:
             self.log_error("can't get ip adress")
 
         try:
-            services = json.loads(
-                            os.popen(
-                                os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../collector_mgr.py")+' json'
-                            ).read())
-
+            services = self.get_config_json()
             utils.summary_sender("collector.service", {}, {"type": "service"}, services)
-
             summary = {
                 "version": version,
                 "commitId": commit,
@@ -65,15 +61,23 @@ class Summary(CollectorBase):
         self._readq.nput("collector.runningTime %s %s" % (int(time.time()), self.running_time))
 
 
-def get_ip():
-    ips = os.popen("/sbin/ip -o -4 addr list| awk '{print $4}' | cut -d/ -f1").read().splitlines()
-    if not ips:
-        ips = os.popen(
-            "ifconfig | grep -v 'eth0:'| grep -A 1 'eth0' | tail -1 | cut -d ':' -f 2 | cut -d ' ' -f 1").read().splitlines()
+    def get_config_json(self) :
+        conf_json = "{}"
+        try:
+            conf_json = json.loads(
+                os.popen(
+                    os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../collector_mgr.py")+' json'
+                ).read())
+        except:
+            self.log_error("can't get config json")
+            pass
 
-    try:
-        ips.remove("127.0.0.1")
-    except ValueError:
-        pass
-    ## we need one of the ip adress
-    return (ips or [None])[0]
+        return conf_json
+
+    def get_ip(self):
+        try:
+            ip = socket.gethostbyname(socket.gethostname())
+        except:
+            pass
+        ## we need one of the ip adress
+        return ip
