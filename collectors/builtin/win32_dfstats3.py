@@ -24,29 +24,42 @@ import sys
 import time
 import glob
 from Queue import Queue
+from checks.libs.wmi.sampler import WMISampler
+from functools import partial
+import logging
+import numbers
 
 from collectors.lib.collectorbase import CollectorBase
-import checks.system.win32 as w32
 
+#WMISampler = None
 
-class WindowsProcstats3(CollectorBase):
+class Win32Dfstats3(CollectorBase):
 
     def __init__(self, config, logger, readq):
-        super(WindowsProcstats3, self).__init__(config, logger, readq)
-
+        super(Win32Dfstats3, self).__init__(config, logger, readq)
+        # log = logging.getLogger("C:\\logs\\test.log")
+        self.WMISampler = partial(WMISampler, logger)
 
     def __call__(self):
-        proc = w32.Processes(self._logger)
-        config = dict( device_blacklist_re=None )
-        metrics = proc.check(config)
+        metrics = self.WMISampler("Win32_LogicalDisk", \
+		    ["DeviceID", \
+			 "FreeSpace", \
+			 "Size"], \
+			 provider="64", timeout_duration=50)
+        metrics.sample()
+        ts = int(time.time())
 
         for metric in metrics:
-            tags = ""
-            for key, value in metric[3].iteritems():
-                tags += (" %s=%s" % (key, value.replace(':','')))
-            self._readq.nput("%s %d %f%s" % (metric[0], metric[1], metric[2], tags))
+            drive_list=str(metric.get("deviceid")).split(":")
+            if len(drive_list) >0 :
+                drive = drive_list[0]
+            else:
+                drive="C"
+            for key, value in metric.iteritems():
+                if isinstance(value, numbers.Number):
+                    self._readq.nput("system.fs.%s %d %f drive=%s" % (key, ts, value, drive))
 
 
 if __name__ == "__main__":
-    procstats3_inst = Procstats3(None, None, Queue())
-    procstats3_inst()
+    dfstats3_inst = Win32Dfstats3(None, None, Queue())
+    dfstats3_inst()

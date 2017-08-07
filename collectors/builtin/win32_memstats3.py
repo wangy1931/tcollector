@@ -29,10 +29,10 @@ from collectors.lib.collectorbase import CollectorBase
 import checks.system.win32 as w32
 
 
-class WindowsMemstats3(CollectorBase):
+class Win32Memstats3(CollectorBase):
 
     def __init__(self, config, logger, readq):
-        super(WindowsMemstats3, self).__init__(config, logger, readq)
+        super(Win32Memstats3, self).__init__(config, logger, readq)
 
 
     def __call__(self):
@@ -48,5 +48,5 @@ class WindowsMemstats3(CollectorBase):
 
 
 if __name__ == "__main__":
-    memstats3_inst = Memstats3(None, None, Queue())
+    memstats3_inst = Win32Memstats3(None, None, Queue())
     memstats3_inst()

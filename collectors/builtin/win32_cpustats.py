@@ -29,10 +29,10 @@ from Queue import Queue
 from collectors.lib.collectorbase import CollectorBase
 import checks.system.win32 as w32
 
-class WindowsCpustats3(CollectorBase):
+class Win32Cpustats3(CollectorBase):
 
     def __init__(self, config, logger, readq):
-        super(WindowsCpustats3, self).__init__(config, logger, readq)
+        super(Win32Cpustats3, self).__init__(config, logger, readq)
 
     def __call__(self):
         ts = int(time.time())
@@ -58,5 +58,5 @@ class WindowsCpustats3(CollectorBase):
 
 
 if __name__ == "__main__":
-    cpustats3_inst = Cpustats3(None, None, Queue())
+    cpustats3_inst = Win32Cpustats3(None, None, Queue())
     cpustats3_inst()
