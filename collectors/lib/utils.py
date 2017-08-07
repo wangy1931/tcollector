@@ -137,7 +137,7 @@ def summary_sender(name, tag, info, content):
     data['tag'].update(tag)
     data['info'] = info
     data['content'] = content
-    requests.post('%s/summary?token=%s' % (metrics_server, token), json=data, headers=headers, cookies=cookies)
+    requests.post('%s/summary?token=%s' % (metrics_server, token), json=data, headers=headers, cookies=cookies, timeout=20)
 
 
 def alertd_post_sender(url, data):
@@ -147,7 +147,7 @@ def alertd_post_sender(url, data):
     token = runner_config.get('base', 'token')
     cookies = dict(_token=token)
     #print '%s%s?token=%s' % (metrics_server, url, token)
-    requests.post('%s%s?token=%s' % (metrics_server, url, token), json=data, headers=headers, cookies=cookies)
+    requests.post('%s%s?token=%s' % (metrics_server, url, token), json=data, headers=headers, cookies=cookies, timeout=20)
 
 def load_runner_conf():
     runner_config_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../..', 'runner.conf'))
