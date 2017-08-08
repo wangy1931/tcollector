@@ -8,7 +8,7 @@ def usage():
     print "windows_deploy.exe --ORG_TOKEN=<token> --CLIENT_ID=<id> [--AGENT_URL=<agent-tarball_url> --METRIC_SERVER_HOST=<server> --ALERTD_SERVER=<alert_server:port>] [-h] [-snmp] [-update]"
 
 try:
-    options,args = getopt.getopt(sys.argv[1:],"", ["help","ORG_TOKEN=","CLIENT_ID=","METRIC_SERVER_HOST=","ALERTD_SERVER=","AGENT_URL="])
+    options,args = getopt.getopt(sys.argv[1:],"", ["help","ORG_TOKEN=","CLIENT_ID=","METRIC_SERVER_HOST=","ALERTD_SERVER=","AGENT_URL=","SYSTEM_ID="])
 except Exception,e:
     print e.message
     sys.exit()
@@ -26,6 +26,8 @@ for name,value in options:
         METRIC_SERVER_HOST = value
     if name in ("--ALERTD_SERVER"):
         ALERTD_SERVER = value
+    if name in ("--SYSTEM_ID"):
+        SYSTEM_ID=value
 
 def abort_if_failed(func,message,**kwags):
     try:
@@ -36,7 +38,7 @@ def abort_if_failed(func,message,**kwags):
         print message+str(e.message)
         raise
 def edit_file(re,replace_string,filenames = ['runner.conf']):
-    massedit.edit_files(filenames, ["re.sub('%s', '%s', line)" % (re,replace_string)], dry_run=False)
+    massedit.edit_files(filenames, ['re.sub("%s", "%s", line)'% (re,replace_string)], dry_run=False)
 # set_token=edit_file('^token *=.*', 'token=%s'%ORG_TOKEN)
 message="failed to set ORG_TOKEN value in runner.conf file\n"
 set_token=edit_file
@@ -49,21 +51,18 @@ abort_if_failed(set_metric_server_host,message,re='^host*=.*',replace_string='ho
 set_run_metric_server_host=edit_file
 message="failed to set_run_metric_server_host"
 abort_if_failed(set_run_metric_server_host,message,re='-H .*',replace_string='-H %s '%METRIC_SERVER_HOST,filenames=['run.bat'])
-# CLIENT_ID=""
-# set_client_id=edit_file('^client_id *=.*','client_id = %s'%CLIENT_ID,filenames=['uagent/uagent.conf'])
-# message="failed to set client_id value in uagent/uagent.conf\n"
-# abort_if_failed(set_client_id,message)
-#
+
 OS="windows"
 set_os=edit_file
 message="failed to update PLATFORM in version.json"
 abort_if_failed(set_os,message,re='%PLATFORM%',replace_string=OS,filenames=['version.json'])
-#
 set_filebeat_token=edit_file
-abort_if_failed(set_filebeat_token,message="",re='<token>',replace_string=ORG_TOKEN,filenames=['winlogbeat-5.4.3-windows-x86_64/winlogbeat.yml'])
-LOG_SERVER_HOST_PORT=METRIC_SERVER_HOST+":5040"
-set_filebeat_output_local=edit_file('<log-server-host-port>',LOG_SERVER_HOST_PORT,filenames=['winlogbeat-5.4.3-windows-x86_64/winlogbeat.yml'])
-#
+abort_if_failed(set_filebeat_token,message="",re='<token>',replace_string=ORG_TOKEN,filenames=['../filebeat/common.conf'])
+abort_if_failed(set_filebeat_token,message="",re='<orgid>',replace_string=CLIENT_ID,filenames=['../filebeat/common.conf'])
+abort_if_failed(set_filebeat_token,message="",re='<sysid>',replace_string=SYSTEM_ID,filenames=['../filebeat/common.conf'])
+abort_if_failed(set_filebeat_token,message="",re='<sysid>',replace_string=SYSTEM_ID,filenames=['../filebeat/filebeat_template.yml'])
+abort_if_failed(set_filebeat_token,message="",re='<orgid>',replace_string=CLIENT_ID,filenames=['../filebeat/filebeat_template.yml'])
+abort_if_failed(set_filebeat_token,message="",re='<basedir>',replace_string="C:/opt/cloudwiz-agent",filenames=['../filebeat/filebeat_template.yml'])
 
-
-
+LOG_SERVER_HOST_PORT=METRIC_SERVER_HOST+":9906"
+abort_if_failed(set_filebeat_token,message="",re='<log-server-host-port>',replace_string=LOG_SERVER_HOST_PORT,filenames=['../filebeat/filebeat_template.yml'])
