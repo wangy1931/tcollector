@@ -1,0 +1,1 @@
+runner.exe --ssl --port 443 --logfile "logs\collector.log" -P "runs\collector.pid" --dedup-interval 0 -H tsdb.cloudwiz.cn
