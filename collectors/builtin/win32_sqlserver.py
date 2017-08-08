@@ -47,13 +47,13 @@ class Win32Sqlserver(CollectorBase):
                     self._readq.nput("sqlserver.%s %d %s" % (metric,self.ts, val))
                 except Exception,e:
                     self.log_warn("metric of name  is %s is None "%metric)
-            self._readq.nput("sqlserver.status %d %s" % (self.ts, '0'))
+            self._readq.nput("sqlserver.state %d %s" % (self.ts, '0'))
             cnxn.close()
         except pyodbc.Error, error:
             message=""
             for e in error:
                  message +=str(e)
             self.log_error("sqlserver collector Error is %s"%message)
-            self._readq.nput("sqlserver.status %d %s" % ( self.ts, '1'))
+            self._readq.nput("sqlserver.state %d %s" % ( self.ts, '1'))
 
 
