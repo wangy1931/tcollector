@@ -27,6 +27,8 @@ for node in parsed['nodes']:
     throttle_ms = indices['store']['throttle_time_in_millis']
 
     index_total = indices['indexing']['index_total']
+    if index_total == 0:
+        index_total = 1
     index_ms = indices['indexing']['index_time_in_millis']
     index_avg = index_ms / index_total
     index_current = indices['indexing']['index_current']
@@ -38,6 +40,8 @@ for node in parsed['nodes']:
     query_avg = query_ms / query_total
     fetch_current = indices['search']['fetch_current']
     fetch_total = indices['search']['fetch_total']
+    if fetch_total == 0:
+        fetch_total = 1
     fetch_ms = indices['search']['fetch_time_in_millis']
     fetch_avg = fetch_ms / fetch_total
 
