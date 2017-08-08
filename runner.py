@@ -4,6 +4,7 @@ import os
 import signal
 import logging
 import sys
+sys.path.append(".")
 import re
 import socket
 import time
@@ -20,7 +21,6 @@ from Queue import Full
 from Queue import Empty
 import ssl
 import common_utils
-
 # global variables._
 COLLECTORS = {}
 DEFAULT_LOG = '/var/log/cloudwiz-collector.log'
@@ -141,7 +141,13 @@ def main_loop(readq, options, configs, collectors):
 
 
 def load_runner_conf():
-    runner_config_path = os.path.splitext(__file__)[0] + ".conf"
+    #runner_config_path = ""
+    if sys.platform == "win32":
+        file = sys.path[0]
+
+        runner_config_path = file + "/runner.conf"
+    else:
+        runner_config_path=os.path.splitext(__file__)[0] + ".conf"
     runner_config = ConfigParser.SafeConfigParser()
     runner_config.read(runner_config_path)
     return runner_config
@@ -228,7 +234,10 @@ def load_collectors(coldir, configs, collectors, readq):
     for config_filename, (path, conf, timestamp) in configs.iteritems():
         try:
             name = os.path.splitext(config_filename)[0]
-            collector_path_name = '%s/%s.py' % (collector_dir, name)
+            if sys.platform == "win32":
+                 collector_path_name = '%s/%s.py' % (collector_dir, name)
+            else:
+                 collector_path_name = '%s/%s.py' % (collector_dir, name)
             if conf.getboolean(SECTION_BASE, CONFIG_ENABLED):
                 if os.path.isfile(collector_path_name) and os.access(collector_path_name, os.X_OK):
                     collector_class_name = conf.get(SECTION_BASE, CONFIG_COLLECTOR_CLASS)
