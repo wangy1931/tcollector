@@ -33,10 +33,10 @@ from collectors.lib.collectorbase import CollectorBase
 
 #WMISampler = None
 
-class Win32Dfstats3(CollectorBase):
+class Win32Dfstats(CollectorBase):
 
     def __init__(self, config, logger, readq):
-        super(Win32Dfstats3, self).__init__(config, logger, readq)
+        super(Win32Dfstats, self).__init__(config, logger, readq)
         # log = logging.getLogger("C:\\logs\\test.log")
         self.WMISampler = partial(WMISampler, logger)
 
@@ -61,5 +61,5 @@ class Win32Dfstats3(CollectorBase):
 
 
 if __name__ == "__main__":
-    dfstats3_inst = Win32Dfstats3(None, None, Queue())
+    dfstats3_inst = Win32Dfstats(None, None, Queue())
     dfstats3_inst()
