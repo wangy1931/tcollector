@@ -14,9 +14,9 @@ build_exe_options = {"packages": ["pyodbc","checks"],"include_files":files}
 
 executables = [
     Executable('runner.py'),
-    Executable('collector_mgr.py'),
-    Executable('deploy/windows/windows_deploy.py'),
-    Executable("deploy/windows/filebeat_conf.py")
+    Executable('collector_mgr.py',targetName="collector_mgr.exe"),
+    Executable('deploy/windows/windows_deploy.py',targetName="windows_deploy.exe"),
+    Executable("deploy/windows/filebeat_conf.py",targetName="filebeat_conf.exe")
 ]
 
 setup(name='cloudwiz-agent',
