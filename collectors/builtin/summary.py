@@ -30,10 +30,11 @@ class Summary(CollectorBase):
         self.running_time = 0
         self.interval = self.get_config('interval')
 
+        ip = None
         try:
             ip = self.get_ip()
         except Exception:
-            self.log_error("can't get ip adress")
+            self.log_error("can't get ip address")
 
         try:
             services = self.get_config_json()
@@ -46,7 +47,7 @@ class Summary(CollectorBase):
                 "os_version": platform.platform()
             }
 
-            if ip and ip is not None:
+            if ip is not None:
                 summary["ip"] = ip
                 utils.summary_sender_info("collector.ip", {"value": ip})
 
@@ -78,6 +79,6 @@ class Summary(CollectorBase):
         try:
             ip = socket.gethostbyname(socket.gethostname())
         except:
-            pass
-        ## we need one of the ip adress
+            return None
+        ## we need one of the ip address
         return ip
