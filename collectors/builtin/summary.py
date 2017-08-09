@@ -80,5 +80,5 @@ class Summary(CollectorBase):
             ip = socket.gethostbyname(socket.gethostname())
         except:
             return None
-        ## we need one of the ip address
+        # we need one of the ip address
         return ip
