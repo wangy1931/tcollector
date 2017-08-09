@@ -27,6 +27,8 @@ for node in parsed['nodes']:
     throttle_ms = indices['store']['throttle_time_in_millis']
 
     index_total = indices['indexing']['index_total']
+    if index_total == 0:
+        index_total = 1
     index_ms = indices['indexing']['index_time_in_millis']
     index_avg = index_ms / index_total
     index_current = indices['indexing']['index_current']
@@ -34,10 +36,14 @@ for node in parsed['nodes']:
 
     query_current = indices['search']['query_current']
     query_total = indices['search']['query_total']
+    if query_total == 0:
+        query_total = 1
     query_ms = indices['search']['query_time_in_millis']
     query_avg = query_ms / query_total
     fetch_current = indices['search']['fetch_current']
     fetch_total = indices['search']['fetch_total']
+    if fetch_total == 0:
+        fetch_total = 1
     fetch_ms = indices['search']['fetch_time_in_millis']
     fetch_avg = fetch_ms / fetch_total
 
@@ -49,9 +55,13 @@ for node in parsed['nodes']:
     jvm = parsed['nodes'][node]['jvm']
 
     young_count = jvm['gc']['collectors']['young']['collection_count']
+    if young_count == 0:
+        young_count = 1
     young_ms = jvm['gc']['collectors']['young']['collection_time_in_millis']
     young_avg = young_ms / young_count
     old_count = jvm['gc']['collectors']['old']['collection_count']
+    if old_count == 0:
+        old_count = 1
     old_ms = jvm['gc']['collectors']['old']['collection_time_in_millis']
     old_avg = old_ms / old_count
 
