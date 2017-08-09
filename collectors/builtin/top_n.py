@@ -14,11 +14,7 @@
 #
 """TopN cpu and memory stats"""
 
-import calendar
 import time
-import re
-import requests
-from Queue import Queue
 from subprocess import Popen, PIPE, CalledProcessError, STDOUT
 
 from collectors.lib import utils
@@ -34,43 +30,45 @@ class TopN(CollectorBase):
 
     def __init__(self, config, logger, readq):
         super(TopN, self).__init__(config, logger, readq)
+        self.N = self.get_config("N", 10);
 
     def __call__(self):
-	self.get_top_N("cpu.topN", "pcpu", "pcpu");
-	self.get_top_N("mem.topN", "pmem", "rss");
+        self.get_top_N("cpu.topN", "pcpu", "pcpu")
+        self.get_top_N("mem.topN", "pmem", "rss")
 
     def get_top_N(self, metric, ps_field, ps_sort_by):
         try:
-            p = Popen("ps -Ao comm,pid,%s --sort=-%s | head -n 6"%(ps_field, ps_sort_by), shell=True, stdout=PIPE, stderr=STDOUT)
+            p = Popen("ps -Ao comm,pid,%s,cmd --sort=-%s | head -n %s"%(ps_field, ps_sort_by,self.N), shell=True, stdout=PIPE, stderr=STDOUT)
             for line in p.stdout.readlines():
                 self.process(line, metric)
-            
+
             retval = p.wait()
             if retval:
-                raise CalledProcessError(ret, "ps -Ao comm,pid,%s --sort=-%s | head -n 6"%(ps_field, ps_sort_by), "ps returned code %i" % retval)
+                raise CalledProcessError(ret, "ps -Ao comm,pid,%s,cmd --sort=-%s | head -n %s"%(ps_field, ps_sort_by,self.N), "ps returned code %i" % retval)
         except OSError as e1:
-            self.log_exception("ps -Ao comm,pid,%s --sort=-%s | head -n 6. [%s]"%(ps_field, ps_sort_by, e1))
+            self.log_exception("ps -Ao comm,pid,%s,cmd --sort=-%s | head -n %s. [%s]"%(ps_field, ps_sort_by,self.N, e1))
             return
-                                                      
+
         except CalledProcessError as e:
-            self.log_exception("Error run ps in subprocess. [%s]", e)                            
+            self.log_exception("Error run ps in subprocess. [%s]", e)
             return
-       
+
     def process(self, line, metric):
-	if not ("COMMAND" in line and "PID" in line):
+        if not ("COMMAND" in line and "PID" in line):
             tokens = line.split()
-            cmd = utils.remove_invalid_characters(tokens[0])
-	    pid = tokens[1]
-            #print cmd, pid, tokens[2] 
+            #cmd = utils.remove_invalid_characters(tokens[0])
+            pid = tokens[1]
+            #print cmd, pid, tokens[2]
             value = float(tokens[2]) # cpu or mem
-            tag = "pid_cmd=%s_%s"%(pid, cmd)
+            full_command = ''.join(tokens[3:len(tokens)]) # full command
+            tag = "pid_cmd=%s_%s"%(pid,utils.remove_invalid_characters(full_command))
             self.print_metric(metric, (int(time.time())), value, tag)
 
 
 if __name__ == "__main__":
     from Queue import Queue
     from collectors.lib.utils import TestQueue
-    
+
     inst = TopN(None, None, TestQueue())
     inst()
- 
+

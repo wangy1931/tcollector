@@ -66,7 +66,7 @@ function get_os() {
 }
 
 function usage() {
-  printf "sudo ORG_TOKEN=<token> CLIENT_ID=<id> [AGENT_URL=<agent-tarball_url> METRIC_SERVER_HOST=<server> ALERTD_SERVER=<alert_server:port>] deploy_agent.sh [-h] [-snmp] [-update]\n"
+  printf "sudo ORG_TOKEN=<token> CLIENT_ID=<id> [AGENT_URL=<agent-tarball_url> METRIC_SERVER_HOST=<server> ALERTD_SERVER=<alert_server:port> PROXY_HOST=<proxy_host_address> PROXY_PORT=<proxy_port>] deploy_agent.sh [-h] [-snmp] [-update]\n"
 }
 
 if [ "$#" -gt 0 ]; then
@@ -97,6 +97,12 @@ fi
 
 if [ -z "${CLIENT_ID// }" ]; then
   echo "CLIENT_ID env variable is not set or empty"
+  usage
+  exit 1
+fi
+
+if [ -z "${SYSTEM_ID// }" ]; then
+  echo "SYSTEM_ID env variable is not set or empty"
   usage
   exit 1
 fi
@@ -160,9 +166,13 @@ sed -i "s/%PLATFORM%/$OS/g" ${agent_install_folder}/version.json
 abort_if_failed "failed to update PLATFORM in version.json"
 
 log_info "set filebeat home by default"
-sed -i "s/<token>/\"${ORG_TOKEN}\"/" ${agent_install_folder}/filebeat-1.3.1/filebeat.yml
-sed -i "s/<log-server-host-port>/\"${METRIC_SERVER_HOST}:5040\"/" ${agent_install_folder}/filebeat-1.3.1/filebeat.yml
-echo "FB_HOME=${agent_install_folder}/filebeat-1.3.1" > /etc/default/filebeat
+
+sed -i "s/<token>/\"${ORG_TOKEN}\"/" ${agent_install_folder}/filebeat/common.conf
+sed -i "s/<orgid>/${CLIENT_ID}/" ${agent_install_folder}/filebeat/common.conf
+sed -i "s/<sysid>/${SYSTEM_ID}/" ${agent_install_folder}/filebeat/common.conf
+sed -i "s/<sysid>/${SYSTEM_ID}/" ${agent_install_folder}/filebeat/filebeat_template.yml
+sed -i "s/<orgid>/${CLIENT_ID}/" ${agent_install_folder}/filebeat/filebeat_template.yml
+sed -i "s/<log-server-host-port>/\"${METRIC_SERVER_HOST}:9906\"/" ${agent_install_folder}/filebeat/filebeat_template.yml
 
 # install snmp, if needed
 if [[ "$snmp" = true ]]; then
@@ -190,6 +200,20 @@ if [ -z "${ALERTD_SERVER// }" ]; then
 else
   echo "set alertd server host s/-H .* /-H $ALERTD_SERVER /g"
   echo -e "alertd_server_and_port=$ALERTD_SERVER" >> ${agent_install_folder}/agent/runner.conf
+fi
+
+if [ -z "${PROXY_HOST// }" ]; then
+  echo "PROXY_HOST variable is not set or empty, default to empty"
+else
+  echo "set proxy server host s/-H .* /-H $PROXY_HOST /g"
+  echo -e "proxy_host=$PROXY_HOST" >> ${agent_install_folder}/agent/runner.conf
+fi
+
+if [ -z "${PROXY_PORT// }" ]; then
+  echo "PROXY_PORT variable is not set or empty, default to empty"
+else
+  echo "set proxy server host s/-H .* /-H $PROXY_PORT /g"
+  echo -e "proxy_port=$PROXY_PORT" >> ${agent_install_folder}/agent/runner.conf
 fi
 
 mkdir -p "${altenv_cache_folder}"
@@ -222,11 +246,10 @@ if [ "$1" == "-update" ]; then
     yes | cp -rf ${working_folder}/conf ${agent_install_folder}/agent/collectors
     yes | rm -rf ${working_folder}/conf
     yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/agent/run ${agent_install_folder}/agent/
-    yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat-1.3.1/filebeat.yml ${agent_install_folder}/filebeat-1.3.1
-    yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat-1.3.1/filebeat.startup.sh ${agent_install_folder}/filebeat-1.3.1
+#    yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat/filebeat.yml ${agent_install_folder}/filebeat
+    yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat/user.conf ${agent_install_folder}/filebeat
+    yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat/filebeat.startup.sh ${agent_install_folder}/filebeat
     yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/altenv/etc/supervisord.conf ${agent_install_folder}/altenv/etc/
-    echo "FB_HOME=${agent_install_folder}/filebeat-1.3.1" > /etc/default/filebeat
-    mkdir -p /var/log/filebeat
 fi
 # chown -hR "$agent_user" "${agent_install_folder}"
 # abort_if_failed "failed to change ownership of ${agent_install_folder}/download to $agent_user"

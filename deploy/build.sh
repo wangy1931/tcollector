@@ -170,6 +170,21 @@ if [[ ! "$skip" = true ]]; then
   popd
   log_info 'finish setting up meld3'
 
+  log_info 'set up redisdb ...'
+  if [[ ! -f ${workspace_folder}/redis-2.10.5.tar.gz ]]; then
+    log_info 'download redis-2.10.5 tarball'
+    wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/redis-2.10.5.tar.gz#md5=3b26c2b9703b4b56b30a1ad508e31083
+    abort_if_failed 'failed to download redis-2.10.5 tarball'
+  fi
+  tar -xzf "${workspace_folder}"/redis-2.10.5.tar.gz -C "${workspace_folder}"
+  abort_if_failed 'failed to extract redis-2.10.5 tarball'
+
+  pushd "${workspace_folder}"/redis-2.10.5
+  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
+  abort_if_failed 'failed to install redis-2.10.5'
+  popd
+  log_info 'finish setting up redisdb'
+
   log_info "set up pymysql ..."
    if [[ ! -f ${workspace_folder}/PyMySQL-0.7.11.tar.gz ]]; then
     log_info 'download meld3-0.6.5 tarball'
@@ -261,16 +276,15 @@ if [[ ! "$skip" = true ]]; then
   log_info 'finish setting up requests'
 
   log_info 'set up filebeat ...'
-  if [[ ! -f ${workspace_folder}/filebeat-1.3.1-${bitness}.tar.gz ]]; then
-    log_info "download filebeat-1.3.1-${bitness}.tar.gz"
-    wget -O ${workspace_folder}/filebeat-1.3.1-${bitness}.tar.gz https://download.elastic.co/beats/filebeat/filebeat-1.3.1-${bitness}.tar.gz
-    abort_if_failed "failed to download filebeat-1.3.1-${bitness}.tar.gz"
+  fb_tarball="filebeat-5.4.2-linux-${bitness}.tar.gz"
+  if [[ ! -f ${workspace_folder}/${fb_tarball} ]]; then
+    log_info "download ${fb_tarball}"
+    wget -P ${workspace_folder} https://artifacts.elastic.co/downloads/beats/filebeat/${fb_tarball}
+    abort_if_failed "failed to download ${fb_tarball}"
   fi
-  tar -xzf ${workspace_folder}/filebeat-1.3.1-${bitness}.tar.gz -C ${workspace_folder}
-  abort_if_failed "failed to extract tar -xzf ${workspace_folder}/filebeat-1.3.1-${bitness}.tar.gz -C ${workspace_folder}"
-  rm -rf ${workspace_folder}/filebeat-1.3.1
-  mv ${workspace_folder}/filebeat-1.3.1-${bitness} ${workspace_folder}/filebeat-1.3.1
-  abort_if_failed "failed to mv ${workspace_folder}/filebeat-1.3.1-${bitness} ${workspace_folder}/filebeat-1.3.1"
+  filebeat_folder=$(tar tfz ${workspace_folder}/${fb_tarball} | head -1 | sed -e 's/\/.*//')
+  tar -xzf ${workspace_folder}/${fb_tarball} -C ${workspace_folder}
+  abort_if_failed "failed to extract tar -xzf ${workspace_folder}/${fb_tarball} -C ${workspace_folder}"
 
   log_info 'set up jolokia'
   if [[ ! -f ${workspace_folder}/jolokia-jvm-1.3.5-agent.jar ]]; then
@@ -380,10 +394,19 @@ yes | cp -f -r "${basedir}/startup_scripts" "${agent_install_folder}/"
 abort_if_failed 'failed to copy startup scripts'
 
 log_info "set up filebeat"
-yes | cp -f -r "${workspace_folder}/filebeat-1.3.1" "${agent_install_folder}"
-yes | cp -f "${basedir}/filebeat.yml" "${agent_install_folder}/filebeat-1.3.1"
-yes | cp -f "${basedir}/filebeat.startup.sh" "${agent_install_folder}/filebeat-1.3.1"
-abort_if_failed "failed to copy ${workspace_folder}/filebeat-1.3.1 ${agent_install_folder}"
+yes | cp -f -r "${workspace_folder}/${filebeat_folder}" "${agent_install_folder}"
+yes | cp -f "${basedir}/filebeat.yml" "${agent_install_folder}/${filebeat_folder}"
+yes | cp -f "${basedir}/filebeat_template.yml" "${agent_install_folder}/${filebeat_folder}"
+yes | cp -f "${basedir}/common.conf" "${agent_install_folder}/${filebeat_folder}"
+yes | cp -f "${basedir}/user.conf" "${agent_install_folder}/${filebeat_folder}"
+yes | cp -f "${basedir}/filebeat_conf.py" "${agent_install_folder}/${filebeat_folder}"
+yes | cp -f "${basedir}/filebeat.startup.sh" "${agent_install_folder}/${filebeat_folder}"
+abort_if_failed "failed to copy ${workspace_folder}/${filebeat_folder} to ${agent_install_folder}"
+ln -s -f -T ${agent_install_folder}/${filebeat_folder} ${agent_install_folder}/filebeat
+abort_if_failed "failed to create/update symlink ${agent_install_folder}/filebeat"
+#sed -i "s/<basedir>/${agent_install_folder_escaped}/g" "${agent_install_folder}/filebeat/filebeat.yml"
+sed -i "s/<basedir>/${agent_install_folder_escaped}/g" "${agent_install_folder}/filebeat/filebeat_template.yml"
+abort_if_failed "failed to edit ${agent_install_folder}/filebeat/filebeat_template.yml"
 log_info "finish setting up filebeat"
 
 log_info "set up lib folder"

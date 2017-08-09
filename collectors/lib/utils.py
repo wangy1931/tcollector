@@ -109,21 +109,16 @@ def remove_invalid_characters(str):
         return str
 
 
-def get_java_pid_and_user_by_pname(pname_pattern_compiled):
-    # verified for both front-running and daemon type process
-    all_java_processes = subprocess.check_output(['jps']).split("\n")
-    for pid_space_name in all_java_processes:
-        m = re.search(pname_pattern_compiled, pid_space_name)
-        if m is not None:
-            pid = m.group("pid")
-            user_qstr_lines = "ps -p %s -o ruser | wc -l" % pid
-            lines = int(subprocess.check_output(user_qstr_lines, shell=True).split("\n")[0])
-            if lines >= 2:
-                user_qstr = "ps -p %s -o ruser | tail -n 1" % pid
-                puser = subprocess.check_output(user_qstr, shell=True).split("\n")[0]
-                return long(m.group("pid")), puser
-            else:
-                return long(m.group("pid")), None
+
+def get_pid_and_user_by_pname(process_unique_string):
+    commond_line = "ps -ef | grep %s | awk '{print $1\",\"$2}'" % process_unique_string
+    pid_user_cmds = subprocess.check_output(commond_line, shell=True).split('\n')
+
+    for pid_user_cmd in pid_user_cmds:
+        if pid_user_cmd != '' and 'grep' not in pid_user_cmd:
+            pid_user_info_list = pid_user_cmd.split(",")
+            return (pid_user_info_list[0]),pid_user_info_list[1]
+
     return None, None
 
 
@@ -143,7 +138,17 @@ def summary_sender(name, tag, info, content):
     data['tag'].update(tag)
     data['info'] = info
     data['content'] = content
-    requests.post('%s/summary?token=%s' % (metrics_server, token), json=data, headers=headers, cookies=cookies)
+    requests.post('%s/summary?token=%s' % (metrics_server, token), json=data, headers=headers, cookies=cookies, timeout=20)
+
+
+def alertd_post_sender(url, data):
+    runner_config = load_runner_conf()
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+    metrics_server = runner_config.get('base', 'alertd_server_and_port')
+    token = runner_config.get('base', 'token')
+    cookies = dict(_token=token)
+    #print '%s%s?token=%s' % (metrics_server, url, token)
+    requests.post('%s%s?token=%s' % (metrics_server, url, token), json=data, headers=headers, cookies=cookies, timeout=20)
 
 def load_runner_conf():
     runner_config_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../..', 'runner.conf'))
@@ -169,3 +174,4 @@ class TestLogger(object):
 
     def exception(self, msg, *args, **kwargs):
         sys.stderr.write("ERROR: " + msg % args)
+
