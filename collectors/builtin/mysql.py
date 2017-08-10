@@ -38,7 +38,7 @@ SEARCH_DIRS = ["/var/lib/mysql"]
 class DB(object):
     """Represents a MySQL server (as we can monitor more than 1 MySQL)."""
 
-    def __init__(self, sockfile, dbname, db, cursor, version, user, passwd):
+    def __init__(self, host, port, sockfile, dbname, db, cursor, version, user, passwd):
         """Constructor.
 
     Args:
@@ -58,6 +58,8 @@ class DB(object):
         self.relay_bytes_relayed = None
         self.user = user
         self.passwd = passwd
+        self.host = host
+        self.port = port
 
         version = version.split(".")
         try:
@@ -103,8 +105,48 @@ class DB(object):
     def _reconnect(self):
         """Reconnects to this MySQL server."""
         self.close()
-        self.db = mysql_connect(self.sockfile, self.user, self.passwd)
+        self.db = _connect(self.host, self.port, self.sockfile, self.user, self.passwd, "", {}, CONNECT_TIMEOUT)
         self.cursor = self.db.cursor()
+
+
+def _connect(host, port, mysql_sock, user, password, defaults_file, ssl, connect_timeout):
+    db = None
+    try:
+        ssl = dict(ssl) if ssl else None
+
+        if defaults_file != '':
+            db = MySQLdb.connect(
+                read_default_file=defaults_file,
+                ssl=ssl,
+                connect_timeout=connect_timeout
+            )
+        elif mysql_sock != '':
+            db = MySQLdb.connect(
+                unix_socket=mysql_sock,
+                user=user,
+                passwd=password,
+                connect_timeout=connect_timeout
+            )
+        elif port:
+            db = MySQLdb.connect(
+                host=host,
+                port=port,
+                user=user,
+                passwd=password,
+                ssl=ssl,
+                connect_timeout=connect_timeout
+            )
+        else:
+            db = MySQLdb.connect(
+                host=host,
+                user=user,
+                passwd=password,
+                ssl=ssl,
+                connect_timeout=connect_timeout
+            )
+        return db
+    except Exception:
+        raise
 
 
 def mysql_connect(sockfile, user, passwd):
@@ -167,6 +209,10 @@ class Mysql(CollectorBase):
         super(Mysql, self).__init__(config, logger, readq)
         if MySQLdb is None:
             raise ImportError("unable to load Python module `MySQLdb'")
+        self.host = self.get_config("host", "")
+        self.port = int(self.get_config("port", 3306))
+        self.default_file = self.get_config("default_file", "")
+        self.ssl = self.get_config("ssl", {})
         self.connection_user = self.get_config("user", "cloudwiz_user")
         self.connection_pass = self.get_config("pass", "cloudwiz_pass")
         self.last_db_refresh = 0
@@ -175,11 +221,19 @@ class Mysql(CollectorBase):
     def __call__(self):
         ts = now()
         if ts - self.last_db_refresh >= DB_REFRESH_INTERVAL:
-            self.find_databases(self.dbs)
+            self.dbs = self.find_databases(self.dbs)
             self.last_db_refresh = ts
         if self.dbs is None:
-            self.log_info("db is none. abort collection")
-            return
+            self.sockfile = ''
+            self.dbs = {}
+            dbname = 'specific'
+            db = _connect(self.host, self.port, self.sockfile, self.connection_user, self.connection_pass, "", {},
+                          CONNECT_TIMEOUT)
+            cursor = db.cursor()
+            cursor.execute("SELECT VERSION()")
+            version = cursor.fetchone()[0]
+            self.dbs[dbname] = DB(self.host, self.port, self.sockfile, dbname, db, cursor, version,
+                                  self.connection_user, self.connection_pass)
 
         errs = []
         for dbname, db in self.dbs.iteritems():
@@ -348,8 +402,9 @@ class Mysql(CollectorBase):
           This map will be modified in place if it's not None.
       """
         sockfiles = find_sockfiles()
-        if not sockfiles:
-            raise IOError("unable to find mysql socket file")
+        if not sockfiles or self.host != "":
+            dbs = None
+            return dbs
         if dbs is None:
             dbs = {}
         for sockfile in sockfiles:
@@ -359,7 +414,8 @@ class Mysql(CollectorBase):
             if not dbname:
                 continue
             try:
-                db = mysql_connect(sockfile, self.connection_user, self.connection_pass)
+                db = _connect(self.host, self.port, sockfile, self.connection_user, self.connection_pass,
+                              self.default_file, self.ssl, CONNECT_TIMEOUT)
                 cursor = db.cursor()
                 cursor.execute("SELECT VERSION()")
             except (EnvironmentError, EOFError, RuntimeError, socket.error, MySQLdb.MySQLError):
@@ -367,7 +423,8 @@ class Mysql(CollectorBase):
                 self.log_exception("Couldn't connect to %s." % sockfile)
                 continue
             version = cursor.fetchone()[0]
-            dbs[dbname] = DB(sockfile, dbname, db, cursor, version, self.connection_user, self.connection_pass)
+            dbs[dbname] = DB(self.host, self.port, sockfile, dbname, db, cursor, version, self.connection_user,
+                             self.connection_pass)
         return dbs
 
     def get_dbname(self, sockfile):
@@ -380,7 +437,9 @@ class Mysql(CollectorBase):
             return None
         return m.group(1)
 
+
 if __name__ == "__main__":
     from Queue import Queue
+
     mysql_inst = Mysql(None, None, Queue())
     mysql_inst()
