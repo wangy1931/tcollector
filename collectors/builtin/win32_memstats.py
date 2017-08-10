@@ -30,7 +30,10 @@ import checks.system.win32 as w32
 
 
 class Win32Memstats(CollectorBase):
-
+    LINUX_MERTICS = {
+        "system.mem.used": "proc.meminfo.active",
+        "system.mem.total":"proc.meminfo.memtotal"
+    }
     def __init__(self, config, logger, readq):
         super(Win32Memstats, self).__init__(config, logger, readq)
 
@@ -45,7 +48,8 @@ class Win32Memstats(CollectorBase):
             for key, value in metric[3].iteritems():
                 tags += (" %s=%s" % (key, value.replace(':','')))
             self._readq.nput("%s %d %f%s" % (metric[0], metric[1], metric[2], tags))
-
+            if self.LINUX_MERTICS.has_key(metric[0]):
+                self._readq.nput("%s %d %f%s" % (self.LINUX_MERTICS.get(str(metric[0])), metric[1], metric[2], tags))
 
 if __name__ == "__main__":
     memstats3_inst = Win32Memstats(None, None, Queue())
