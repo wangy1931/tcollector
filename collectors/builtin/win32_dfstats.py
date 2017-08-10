@@ -63,7 +63,7 @@ class Win32Dfstats(CollectorBase):
                 if isinstance(value, numbers.Number):
                     self._readq.nput("system.fs.%s %d %f drive=%s" % (key, ts, value, drive))
                     if self.LINUX_MERTICS.has_key(key):
-                        self._readq.nput("system.fs.%s %d %f drive=%s" % (self.LINUX_MERTICS.get(key), ts, value, drive))
+                        self._readq.nput("%s %d %f drive=%s" % (self.LINUX_MERTICS.get(key), ts, value, drive))
 
 
 if __name__ == "__main__":
