@@ -360,8 +360,10 @@ class Postgresql(CollectorBase):
             try:
                 # commit to close the current query transaction
                 self.db.commit()
+                self._readq.nput("postgresql.state %i 0" % time.time())
             except Exception as e:
                 self.log_warn("Unable to commit: {0}".format(e))
+                self._readq.nput("postgresql.state %i 1" % time.time())
 
     def _build_relations_config(self, relations):
         """Builds a dictionary from relations configuration while maintaining compatibility
@@ -649,7 +651,6 @@ class Postgresql(CollectorBase):
                 else:
                     connection = connect_fct(host=host, user=user, password=password,
                                              database=dbname)
-                self._readq.nput("postgresql.state %i 0" % time.time())
             except Exception as e:
                 self._readq.nput("postgresql.state %i 1" % time.time())
                 message = u'Error establishing postgres connection: %s' % (str(e))
