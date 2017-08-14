@@ -152,7 +152,7 @@ class HadoopUtil(CollectorBase):
         self.REPLACEMENTS=REPLACEMENTS
         self.exeClass=exeClass
 
-    def __call__(self,metric):
+    def call(self,metric):
         try:
             with utils.lower_privileges(self._logger):
                 if json:
