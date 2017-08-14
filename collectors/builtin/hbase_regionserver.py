@@ -23,7 +23,7 @@ except ImportError:
 
 from collectors.lib import utils
 from collectors.lib.hadoop_http import HadoopHttp
-from collectors.lib.hadoop_http import HadoopFather
+from collectors.lib.hadoop_http import HadoopUtil
 EMIT_REGION = True
 
 EXCLUDED_CONTEXTS = ("master")
@@ -70,7 +70,7 @@ class HBaseRegionserverHttp(HadoopHttp):
                 self.emit_metric(context, current_time, metric_name, value)
 
 
-class HbaseRegionserver(HadoopFather):
+class HbaseRegionserver(HadoopUtil):
     def __init__(self, config, logger, readq):
         super(HbaseRegionserver, self).__init__(config, logger, readq,None,HBaseRegionserverHttp)
         self.host = self.get_config('host', 'localhost')
@@ -79,7 +79,7 @@ class HbaseRegionserver(HadoopFather):
         self.daemon="regionserver"
 
     def __call__(self):
-        self.exe("hbase.regionserver.state")
+        self.call("hbase.regionserver.state")
 
 
 

@@ -22,7 +22,7 @@ except ImportError:
     json = None
 
 from collectors.lib.hadoop_http import HadoopHttp
-from collectors.lib.hadoop_http import HadoopFather
+from collectors.lib.hadoop_http import HadoopUtil
 
 EXCLUDED_CONTEXTS = ('regionserver', 'regions', )
 
@@ -46,7 +46,7 @@ class HBaseMasterHttp(HadoopHttp):
             self.emit_metric(context, current_time, metric_name, value)
 
 
-class HbaseMaster(HadoopFather):
+class HbaseMaster(HadoopUtil):
 
     def __init__(self, config, logger, readq):
         super(HbaseMaster, self).__init__(config, logger, readq, None, HBaseMasterHttp)
@@ -56,7 +56,7 @@ class HbaseMaster(HadoopFather):
         self.daemon="master"
 
     def __call__(self):
-        self.exe("hbase.master.state")
+        self.call("hbase.master.state")
 
 
 
