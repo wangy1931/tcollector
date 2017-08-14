@@ -145,14 +145,14 @@ class HadoopHttp(object):
         key = key.replace(" ", "_")
         return context, key
 
-class HadoopFather(CollectorBase):
+class HadoopUtil(CollectorBase):
     def __init__(self, config, logger, readq,REPLACEMENTS,exeClass):
-        super(HadoopFather, self).__init__(config, logger, readq)
+        super(HadoopUtil, self).__init__(config, logger, readq)
         self.readq = readq
         self.REPLACEMENTS=REPLACEMENTS
         self.exeClass=exeClass
 
-    def exe(self,metric):
+    def __call__(self,metric):
         try:
             with utils.lower_privileges(self._logger):
                 if json:
