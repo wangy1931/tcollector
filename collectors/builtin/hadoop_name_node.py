@@ -19,7 +19,7 @@ except ImportError:
     json = None
 
 from Queue import Queue
-from collectors.lib.hadoop_http import HadoopFather
+from collectors.lib.hadoop_http import HadoopUtil
 from collectors.lib.hadoop_http import HadoopNode
 
 REPLACEMENTS = {
@@ -28,7 +28,7 @@ REPLACEMENTS = {
 }
 
 
-class HadoopNameNode(HadoopFather):
+class HadoopNameNode(HadoopUtil):
     def __init__(self, config, logger, readq):
         super(HadoopNameNode, self).__init__(config, logger, readq,REPLACEMENTS,HadoopNode)
 
@@ -39,7 +39,7 @@ class HadoopNameNode(HadoopFather):
 
 
     def __call__(self):
-        self.exe("hadoop.namenode.state")
+        self.call("hadoop.namenode.state")
 
 
 
