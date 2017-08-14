@@ -162,8 +162,6 @@ class HadoopUtil(CollectorBase):
                     self._readq.nput("%s %s %s" % (metric,int(time.time()), '1'))
                     self.log_error("This collector requires the `json' Python module.")
         except Exception,e:
-            import traceback
-            traceback.print_exc()
             self._readq.nput("%s %s %s" % (metric, int(time.time()), '1'))
             self.log_error("metric is %s error is %s"%(metric,str(e)))
 
