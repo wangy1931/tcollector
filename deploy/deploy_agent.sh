@@ -233,10 +233,17 @@ if [ $OS = "Debian" -o $OS = "Ubuntu" ]; then
   update-rc.d ${agent_startup_scripts} defaults
   abort_if_failed "failed to link the startup scripts"
 elif [ $OS = "RedHat" ]; then
-  chkconfig --del "${agent_startup_scripts}"
-  abort_if_failed "failed to unlink the startup scripts"
-  chkconfig --add "${agent_startup_scripts}"
-  abort_if_failed "failed to link the startup scripts"
+  if command -v chkconfig >/dev/null 2>&1;then
+    chkconfig --del "${agent_startup_scripts}"
+    abort_if_failed "failed to unlink the startup scripts"
+    chkconfig --add "${agent_startup_scripts}"
+    abort_if_failed "failed to link the startup scripts"
+  else 
+    insserv --del "${agent_startup_scripts}"
+    abort_if_failed "failed to unlink the startup scripts"
+    insserv --add "${agent_startup_scripts}"
+    abort_if_failed "failed to link the startup scripts"
+  fi    
 else
   printf "${color_red}unrecognized OS $OS. abort!${color_normal}\n"
 fi
