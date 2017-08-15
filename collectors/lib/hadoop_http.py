@@ -24,7 +24,8 @@ try:
 except ImportError:
     from ordereddict import OrderedDict  # Can be easy_install'ed for <= 2.6
 from collectors.lib.utils import is_numeric
-
+from collectors.lib import utils
+from collectors.lib.collectorbase import CollectorBase
 EXCLUDED_KEYS = (
     "Name",
     "name"
@@ -44,10 +45,12 @@ class HadoopHttp(object):
 
     def request(self):
         try:
-            resp = requests.get('%s%s' % (self.http_prefix, self.uri)).content
+            req=requests.get('%s%s' % (self.http_prefix, self.uri))
+            req.raise_for_status()
+            resp =req.content
         except:
-            resp = '{}'
-            self.logger.warn('hadoop_http request failed: %s from %s', sys.exc_info()[0], '%s%s' % (self.http_prefix, self.uri))
+            self.logger.exception('hadoop_http request failed: %s from %s', sys.exc_info()[0], '%s%s' % (self.http_prefix, self.uri))
+            return None
         return json.loads(resp)
 
     def poll(self):
@@ -141,6 +144,26 @@ class HadoopHttp(object):
         context = [c.replace(" ", "_") for c in context]
         key = key.replace(" ", "_")
         return context, key
+
+class HadoopUtil(CollectorBase):
+    def __init__(self, config, logger, readq,REPLACEMENTS,exeClass):
+        super(HadoopUtil, self).__init__(config, logger, readq)
+        self.readq = readq
+        self.REPLACEMENTS=REPLACEMENTS
+        self.exeClass=exeClass
+
+    def call(self,metric):
+        try:
+            with utils.lower_privileges(self._logger):
+                if json:
+                    self.exeClass(self.service, self.daemon, self.host, self.port, self.REPLACEMENTS, self.readq, self._logger).emit()
+                    self._readq.nput("%s %s %s" % (metric, int(time.time()), '0'))
+                else:
+                    self._readq.nput("%s %s %s" % (metric,int(time.time()), '1'))
+                    self.log_error("This collector requires the `json' Python module.")
+        except Exception,e:
+            self._readq.nput("%s %s %s" % (metric, int(time.time()), '1'))
+            self.log_error("metric is %s error is %s"%(metric,str(e)))
 
 
 class HadoopNode(HadoopHttp):
