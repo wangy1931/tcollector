@@ -23,7 +23,7 @@ except ImportError:
 
 from collectors.lib import utils
 from collectors.lib.hadoop_http import HadoopHttp
-
+from collectors.lib.hadoop_http import HadoopUtil
 EMIT_REGION = True
 
 EXCLUDED_CONTEXTS = ("master")
@@ -31,8 +31,8 @@ REGION_METRIC_PATTERN = re.compile(r"[N|n]amespace_(.*)_table_(.*)_region_(.*)_m
 
 
 class HBaseRegionserverHttp(HadoopHttp):
-    def __init__(self, host, port, logger, readq):
-        super(HBaseRegionserverHttp, self).__init__("hbase", "regionserver", host, port, readq, logger)
+    def __init__(self,service,daemon, host, port, replacements,readq,logger):
+        super(HBaseRegionserverHttp, self).__init__(service,daemon, host, port, readq, logger)
 
     def emit_region_metric(self, context, current_time, full_metric_name, value):
         match = REGION_METRIC_PATTERN.match(full_metric_name)
@@ -70,23 +70,17 @@ class HBaseRegionserverHttp(HadoopHttp):
                 self.emit_metric(context, current_time, metric_name, value)
 
 
-class HbaseRegionserver(CollectorBase):
+class HbaseRegionserver(HadoopUtil):
     def __init__(self, config, logger, readq):
-        super(HbaseRegionserver, self).__init__(config, logger, readq)
-
-        self.logger = logger
-        self.readq = readq
+        super(HbaseRegionserver, self).__init__(config, logger, readq,None,HBaseRegionserverHttp)
         self.host = self.get_config('host', 'localhost')
         self.port = self.get_config('port', 16030)
+        self.service="hbase"
+        self.daemon="regionserver"
 
     def __call__(self):
-        with utils.lower_privileges(self._logger):
-            if json:
-                self._readq.nput("hbase.regionserver.state %s %s" % (int(time.time()), '0'))
-                HBaseRegionserverHttp(self.host, self.port, self.logger, self.readq).emit()
-            else:
-                self._readq.nput("hbase.regionserver.state %s %s" % (int(time.time()), '1'))
-                self.logger.error("This collector requires the `json' Python module.")
+        self.call("hbase.regionserver.state")
+
 
 
 if __name__ == "__main__":
