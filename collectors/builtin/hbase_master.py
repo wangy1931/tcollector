@@ -21,9 +21,8 @@ try:
 except ImportError:
     json = None
 
-from collectors.lib import utils
 from collectors.lib.hadoop_http import HadoopHttp
-
+from collectors.lib.hadoop_http import HadoopUtil
 
 EXCLUDED_CONTEXTS = ('regionserver', 'regions', )
 
@@ -35,8 +34,8 @@ class HBaseMasterHttp(HadoopHttp):
     Require HBase 0.96.0+
     """
 
-    def __init__(self, host, port, logger, readq):
-        super(HBaseMasterHttp, self).__init__('hbase', 'master', host, port, readq, logger)
+    def __init__(self,service,daemon, host, port,replacements,readq,logger ):
+        super(HBaseMasterHttp, self).__init__(service, daemon, host, port, readq, logger)
 
     def emit(self):
         current_time = int(time.time())
@@ -47,23 +46,20 @@ class HBaseMasterHttp(HadoopHttp):
             self.emit_metric(context, current_time, metric_name, value)
 
 
-class HbaseMaster(CollectorBase):
-    def __init__(self, config, logger, readq):
-        super(HbaseMaster, self).__init__(config, logger, readq)
+class HbaseMaster(HadoopUtil):
 
-        self.logger = logger
-        self.readq = readq
+    def __init__(self, config, logger, readq):
+        super(HbaseMaster, self).__init__(config, logger, readq, None, HBaseMasterHttp)
         self.host = self.get_config('host', 'localhost')
         self.port = self.get_config('port', 16010)
+        self.service="hbase"
+        self.daemon="master"
 
     def __call__(self):
-        with utils.lower_privileges(self._logger):
-            if json:
-                self._readq.nput("hbase.master.state %s %s" % (int(time.time()), '0'))
-                HBaseMasterHttp(self.host, self.port, self.logger, self.readq).emit()
-            else:
-                self._readq.nput("hbase.master.state %s %s" % (int(time.time()), '1'))
-                self.logger.error("This collector requires the `json' Python module.")
+        self.call("hbase.master.state")
+
+
+
 
 
 if __name__ == "__main__":
