@@ -60,10 +60,12 @@ class TopN(CollectorBase):
             pid = tokens[1]
             #print cmd, pid, tokens[2]
              # cpu or mem
-            cpu_count=1
+
             if 'cpu' in metric:
                 cpu_count=psutil.cpu_count()
-            value = float(tokens[2])/cpu_count
+                value = float(tokens[2])/cpu_count
+            else:
+                value = float(tokens[2])
             full_command = ''.join(tokens[3:len(tokens)])  # full command
             tag = "pid_cmd=%s_%s"%(pid,utils.remove_invalid_characters(full_command))
             self.print_metric(metric, (int(time.time())), value, tag)
