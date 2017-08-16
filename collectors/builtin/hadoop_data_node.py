@@ -20,7 +20,7 @@ except ImportError:
 
 from Queue import Queue
 
-from collectors.lib.hadoop_http import HadoopUtil
+from collectors.lib.hadoop_http import HadoopCollectorBase
 from collectors.lib.hadoop_http import HadoopNode
 
 REPLACEMENTS = {
@@ -31,9 +31,9 @@ REPLACEMENTS = {
 }
 
 
-class HadoopDataNode(HadoopUtil):
+class HadoopDataNode(HadoopCollectorBase):
     def __init__(self, config, logger, readq):
-        super(HadoopDataNode, self).__init__(config, logger, readq,REPLACEMENTS,HadoopNode)
+        super(HadoopDataNode, self).__init__(config, logger, readq, REPLACEMENTS, HadoopNode)
         self.service = self.get_config('service', 'hadoop')
         self.daemon = self.get_config('daemon', 'datanode')
         self.host = self.get_config('host', 'localhost')

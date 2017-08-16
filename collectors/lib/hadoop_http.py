@@ -145,12 +145,12 @@ class HadoopHttp(object):
         key = key.replace(" ", "_")
         return context, key
 
-class HadoopUtil(CollectorBase):
-    def __init__(self, config, logger, readq,REPLACEMENTS,exeClass):
-        super(HadoopUtil, self).__init__(config, logger, readq)
+class HadoopCollectorBase(CollectorBase):
+    def __init__(self, config, logger, readq, REPLACEMENTS, exeClass):
+        super(HadoopCollectorBase, self).__init__(config, logger, readq)
         self.readq = readq
-        self.REPLACEMENTS=REPLACEMENTS
-        self.exeClass=exeClass
+        self.REPLACEMENTS = REPLACEMENTS
+        self.exeClass = exeClass
 
     def call(self,metric):
         try:
