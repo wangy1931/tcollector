@@ -23,7 +23,7 @@ except ImportError:
 
 from collectors.lib import utils
 from collectors.lib.hadoop_http import HadoopHttp
-from collectors.lib.hadoop_http import HadoopUtil
+from collectors.lib.hadoop_http import HadoopCollectorBase
 EMIT_REGION = True
 
 EXCLUDED_CONTEXTS = ("master")
@@ -31,8 +31,8 @@ REGION_METRIC_PATTERN = re.compile(r"[N|n]amespace_(.*)_table_(.*)_region_(.*)_m
 
 
 class HBaseRegionserverHttp(HadoopHttp):
-    def __init__(self,service,daemon, host, port, replacements,readq,logger):
-        super(HBaseRegionserverHttp, self).__init__(service,daemon, host, port, readq, logger)
+    def __init__(self,service,daemon, host, port, replacements, readq, logger):
+        super(HBaseRegionserverHttp, self).__init__(service, daemon, host, port, readq, logger)
 
     def emit_region_metric(self, context, current_time, full_metric_name, value):
         match = REGION_METRIC_PATTERN.match(full_metric_name)
@@ -70,13 +70,13 @@ class HBaseRegionserverHttp(HadoopHttp):
                 self.emit_metric(context, current_time, metric_name, value)
 
 
-class HbaseRegionserver(HadoopUtil):
+class HbaseRegionserver(HadoopCollectorBase):
     def __init__(self, config, logger, readq):
-        super(HbaseRegionserver, self).__init__(config, logger, readq,None,HBaseRegionserverHttp)
+        super(HbaseRegionserver, self).__init__(config, logger, readq, None, HBaseRegionserverHttp)
         self.host = self.get_config('host', 'localhost')
         self.port = self.get_config('port', 16030)
-        self.service="hbase"
-        self.daemon="regionserver"
+        self.service = "hbase"
+        self.daemon = "regionserver"
 
     def __call__(self):
         self.call("hbase.regionserver.state")
