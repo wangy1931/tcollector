@@ -19,7 +19,7 @@ except ImportError:
     json = None
 
 from Queue import Queue
-from collectors.lib.hadoop_http import HadoopUtil
+from collectors.lib.hadoop_http import HadoopCollectorBase
 from collectors.lib.hadoop_http import HadoopNode
 
 REPLACEMENTS = {
@@ -28,10 +28,9 @@ REPLACEMENTS = {
 }
 
 
-class HadoopNameNode(HadoopUtil):
+class HadoopNameNode(HadoopCollectorBase):
     def __init__(self, config, logger, readq):
-        super(HadoopNameNode, self).__init__(config, logger, readq,REPLACEMENTS,HadoopNode)
-
+        super(HadoopNameNode, self).__init__(config, logger, readq, REPLACEMENTS, HadoopNode)
         self.service = self.get_config('service', 'hadoop')
         self.daemon = self.get_config('daemon', 'namenode')
         self.host = self.get_config('host', 'localhost')
