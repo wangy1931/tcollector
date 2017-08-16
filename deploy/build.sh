@@ -402,7 +402,9 @@ yes | cp -f "${basedir}/user.conf" "${agent_install_folder}/${filebeat_folder}"
 yes | cp -f "${basedir}/filebeat_conf.py" "${agent_install_folder}/${filebeat_folder}"
 yes | cp -f "${basedir}/filebeat.startup.sh" "${agent_install_folder}/${filebeat_folder}"
 abort_if_failed "failed to copy ${workspace_folder}/${filebeat_folder} to ${agent_install_folder}"
-ln -s -f -T ${agent_install_folder}/${filebeat_folder} ${agent_install_folder}/filebeat
+pushd ${agent_install_folder}
+ln -s -f -T ${filebeat_folder} filebeat
+popd
 abort_if_failed "failed to create/update symlink ${agent_install_folder}/filebeat"
 #sed -i "s/<basedir>/${agent_install_folder_escaped}/g" "${agent_install_folder}/filebeat/filebeat.yml"
 sed -i "s/<basedir>/${agent_install_folder_escaped}/g" "${agent_install_folder}/filebeat/filebeat_template.yml"
