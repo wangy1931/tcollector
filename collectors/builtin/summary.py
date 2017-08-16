@@ -6,6 +6,7 @@ import socket
 from time import localtime, strftime
 from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
+from collectors.lib.inventory.linux_network import LinuxNetwork
 
 SERVICE_RUNNING_TIME = [
     'hadoop',
@@ -76,9 +77,18 @@ class Summary(CollectorBase):
         return conf_json
 
     def get_ip(self):
+        network = LinuxNetwork(self._logger).populate()
+        default_v4 = network.get('default_ipv4')
+
+        if default_v4.get('address') is not None:
+            ipv4 = default_v4.get('address')
+        else:
+            ipv4 = self.get_ip_by_host()
+        return ipv4
+
+    def get_ip_by_host(self):
         try:
-            ip = socket.gethostbyname(socket.gethostname())
+            return socket.gethostbyname(socket.gethostname())
         except:
+            self.log_error("can't get ip by hostname")
             return None
-        # we need one of the ip address
-        return ip
