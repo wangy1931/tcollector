@@ -25,7 +25,6 @@ class WindowsHostScan(CollectorBase):
             self.log_error('cannot send host scan result to alertd %s' % e)
             self._readq.nput('scan.state %s %s' % (int(time.time()), '1'))
 
-
 class HostParser:
     def __init__(self, hardware, platform, network, virtual, distribution):
 
