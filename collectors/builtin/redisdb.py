@@ -208,8 +208,8 @@ class Redisdb(CollectorBase):
                     slave_tags = tags[:]
                     for slave_tag in ('ip', 'port'):
                         if slave_tag in info[key]:
-                            slave_tags.append('slave_{0}:{1}'.format(slave_tag, info[key][slave_tag]))
-                    slave_tags.append('slave_id:%s' % key.lstrip('slave'))
+                            slave_tags.append('slave_{0}={1}'.format(slave_tag, info[key][slave_tag]))
+                    slave_tags.append('slave_id=%s' % key.lstrip('slave'))
                     self.send_info_guage('redis.replication.delay', delay, tags=slave_tags)
 
         if self.REPL_KEY in info:
@@ -250,7 +250,7 @@ class Redisdb(CollectorBase):
             slowlog_tags = list(tags)
             command = slowlog['command'].split()
             if command:
-                slowlog_tags.append('command:{0}'.format(command[0]))
+                slowlog_tags.append('command={0}'.format(command[0]))
 
             value = slowlog['duration']
             self.send_info_guage('redis.slowlog.micros', value, tags=slowlog_tags)
@@ -267,7 +267,7 @@ class Redisdb(CollectorBase):
 
         for key, stats in command_stats.iteritems():
             command = key.split('_', 1)[1]
-            command_tags = tags + ['command:%s' % command]
+            command_tags = tags + ['command=%s' % command]
             self.send_info_guage('redis.command.calls', stats['calls'], tags=command_tags)
             self.send_info_guage('redis.command.usec_per_call', stats['usec_per_call'], tags=command_tags)
 
