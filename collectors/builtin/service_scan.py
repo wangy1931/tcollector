@@ -12,7 +12,7 @@ class ServiceScan(CollectorBase):
     def __call__(self):
         try:
             all_proc = []
-            host = socket.gethostname()
+            host = utils.get_hostname(self._logger)
             ip = utils.get_ip(self._logger)
 
             for proc in psutil.process_iter():
