@@ -42,8 +42,10 @@ class Win32Cpustats(CollectorBase):
         self._readq.nput('cpu.usr %d %f' % (ts, cpu_percent.user / psutil.cpu_count()))
         self._readq.nput('system.cpu.idle %d %f' % (ts, cpu_percent.idle / psutil.cpu_count()))
         self._readq.nput('system.cpu.system %d %f' % (ts, cpu_percent.system / psutil.cpu_count()))
-        self._readq.nput('system.cpu.interrupt %d %f' % (ts, cpu_percent.interrupt / psutil.cpu_count()))
-
+        try:
+             self._readq.nput('system.cpu.interrupt %d %f' % (ts, cpu_percent.interrupt / psutil.cpu_count()))
+        except Exception,e:
+             pass
     def xxx__call__(self):
         cpu = w32.Cpu(None)
         config = dict( device_blacklist_re=None )
