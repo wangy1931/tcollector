@@ -16,7 +16,7 @@ executables = [
     Executable('runner.py',targetName="runner.exe"),
     Executable('collector_mgr.py',targetName="collector_mgr.exe"),
     Executable('deploy/windows/windows_deploy.py',targetName="windows_deploy.exe"),
-    Executable("deploy/filebeat_conf.py",targetName="filebeat_conf.exe")
+    Executable("deploy/windows/filebeat_conf_imp.py")
 ]
 
 setup(name='cloudwiz-agent',

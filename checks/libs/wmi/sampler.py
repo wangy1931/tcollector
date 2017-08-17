@@ -90,7 +90,7 @@ class WMISampler(object):
     _sampling = False
 
     def __init__(self, logger, class_name, property_names, filters="", host="localhost",
-                 namespace="root\\cimv2", provider=None,
+                 namespace="root\\CIMV2", provider=None,
                  username="", password="", and_props=[], timeout_duration=10):
         self.logger = logger
 
@@ -349,7 +349,7 @@ class WMISampler(object):
 
         locator = Dispatch("WbemScripting.SWbemLocator")
         connection = locator.ConnectServer(
-            self.host, self.namespace, self.username, self.password, *additional_args
+            self.host, self.namespace, self.username, self.password
         )
 
         return connection
