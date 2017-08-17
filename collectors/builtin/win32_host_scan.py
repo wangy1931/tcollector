@@ -25,6 +25,7 @@ class WindowsHostScan(CollectorBase):
             self._readq.nput('scan.state %s %s' % (int(time.time()), '1'))
 
 
+
 class HostParser:
     def __init__(self, logger):
         self.logger = logger
