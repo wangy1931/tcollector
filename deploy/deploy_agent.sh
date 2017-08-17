@@ -252,7 +252,6 @@ if [ "$1" == "-update" ]; then
        yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat-5.4.2-linux-x86_64/user.conf ${agent_install_folder}/filebeat
     fi
 fi
-
 # chown -hR "$agent_user" "${agent_install_folder}"
 # abort_if_failed "failed to change ownership of ${agent_install_folder}/download to $agent_user"
 
