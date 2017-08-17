@@ -13,7 +13,7 @@ class ServiceScan(CollectorBase):
         try:
             all_proc = []
             host = socket.gethostname()
-            ip = socket.gethostbyname(socket.gethostname())
+            ip = utils.get_ip(self._logger)
 
             for proc in psutil.process_iter():
                 try:

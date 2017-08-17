@@ -25,6 +25,7 @@ import socket
 import ConfigParser
 import re
 from Queue import Queue
+from collectors.lib.inventory.linux_network import LinuxNetwork
 
 # If we're running as root and this user exists, we'll drop privileges.
 USER = "cwiz-user"
@@ -148,6 +149,26 @@ def alertd_post_sender(url, data):
     cookies = dict(_token=token)
     #print '%s%s?token=%s' % (metrics_server, url, token)
     requests.post('%s%s?token=%s' % (metrics_server, url, token), json=data, headers=headers, cookies=cookies, timeout=20)
+
+
+def get_ip(logger):
+    network = LinuxNetwork(logger).populate()
+    default_v4 = network.get('default_ipv4')
+
+    if default_v4.get('address') is not None:
+        ipv4 = default_v4.get('address')
+    else:
+        ipv4 = get_ip_by_host(logger)
+    return ipv4
+
+
+def get_ip_by_host(logger):
+    try:
+        return socket.gethostbyname(socket.gethostname())
+    except:
+        logger.log_error("can't get ip by hostname")
+        return None
+
 
 def load_runner_conf():
     runner_config_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../..', 'runner.conf'))
