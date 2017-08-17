@@ -26,6 +26,7 @@ import ConfigParser
 import re
 from Queue import Queue
 from collectors.lib.inventory.linux_network import LinuxNetwork
+from collectors.lib.inventory.linux_platform import Platform
 
 # If we're running as root and this user exists, we'll drop privileges.
 USER = "cwiz-user"
@@ -169,6 +170,14 @@ def get_ip_by_host(logger):
         logger.log_error("can't get ip by hostname")
         return None
 
+
+def get_hostname(logger):
+    try:
+        platform = Platform().collect()
+        return platform.get('hostname')
+    except:
+        logger.log_error("can't get hostname from platform ")
+        return socket.gethostname()
 
 def load_runner_conf():
     runner_config_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../..', 'runner.conf'))
