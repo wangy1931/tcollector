@@ -157,7 +157,7 @@ if [[ ! "$skip" = true ]]; then
 
   log_info 'set up six module...'
   if [[ ! -f ${workspace_folder}/six-1.9.0.tar.gz ]]; then
-    log_info 'download docker-2.3.0 tarball'
+    log_info 'download six-1.9.0.tar.gz tarball'
     wget --directory-prefix="${workspace_folder}" https://pypi.python.org/packages/16/64/1dc5e5976b17466fd7d712e59cbe9fb1e18bec153109e5ba3ed6c9102f1a/six-1.9.0.tar.gz#md5=476881ef4012262dfc8adc645ee786c4
     abort_if_failed 'failed to download six-1.9.0.tar.gz tarball'
   fi
