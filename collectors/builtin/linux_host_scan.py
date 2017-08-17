@@ -24,7 +24,6 @@ class LinuxHostScan(CollectorBase):
             distribution = Distribution(self._logger).get_distribution_facts()
 
             host = HostParser(basic_hardware, platform, network, virtual, distribution)
-            self.log_error(host.__dict__)
             utils.alertd_post_sender('/cmdb/agent/host/scan', host.__dict__)
             self._readq.nput('scan.state %s %s' % (int(time.time()), '0'))
         except Exception as e:

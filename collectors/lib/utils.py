@@ -167,7 +167,7 @@ def get_ip_by_host(logger):
     try:
         return socket.gethostbyname(socket.gethostname())
     except:
-        logger.log_error("can't get ip by hostname")
+        logger.error("can't get ip by hostname")
         return None
 
 
@@ -176,7 +176,7 @@ def get_hostname(logger):
         platform = Platform().collect()
         return platform.get('hostname')
     except:
-        logger.log_error("can't get hostname from platform ")
+        logger.error("can't get hostname from platform ")
         return socket.gethostname()
 
 def load_runner_conf():
