@@ -39,10 +39,6 @@ def get_comman_dict():
     "<sysid>":common.get('conf', 'fields.sysid'),
     "<token>" :common.get('conf', 'fields.token')
     }
-def get_user_conf():
-    user =load_runner_conf(runner_config_path+'/user.conf')
-    return eval(user.get('conf','logs'))
-
 def get_all_dict(common,user):
     temp=common.copy()
     for key in user:
@@ -70,6 +66,25 @@ def set_filebeat_yml(common,user_conf):
                  write_date+=line
     with open(runner_config_path+'/filebeat.yml','wr') as f:
         f.writelines(write_date)
+
+def get_user_conf_dict(config,config_name):
+    return {"document_type":config.get(config_name,"document_type"),
+            "path":config.get(config_name,"path").split(","),
+            "pattern":  config.get(config_name,"pattern") if(config.has_option(config_name,"pattern")) else ''
+            }
+
+def get_user_conf():
+    user=load_runner_conf(runner_config_path+'/user.conf')
+    conf_list=user.sections()
+    conf_dict_list=[]
+    if "conf" in conf_list:
+        old_list=eval(user.get('conf', 'logs'))
+        conf_dict_list=conf_dict_list+old_list
+        conf_list.remove("conf")
+    for conf_name in conf_list:
+        conf_dict_list.append(get_user_conf_dict(user,conf_name))
+    return conf_dict_list
+
 
 if __name__=='__main__':
     common= get_comman_dict()
