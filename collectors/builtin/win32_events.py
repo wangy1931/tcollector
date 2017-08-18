@@ -8,7 +8,7 @@ import wmi
 from collectors.lib.collectorbase import CollectorBase
 
 record_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../event_last_query.conf')
-log_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../events.log')
+log_file_path = 'c:\\opt\\cloudwiz-agent\\altenv\\var\\log\\events.log'
 
 
 class WindowsEvents(CollectorBase):
