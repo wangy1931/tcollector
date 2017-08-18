@@ -647,9 +647,7 @@ class Sender(threading.Thread):
                 metric = self.process(line)
                 if metric is not None:
                     metrics.append(metric)
-                else:
-                    continue
-                byte_count += len(line)
+                    byte_count += len(line)
                 while byte_count < MAX_SENDQ_SIZE:
                     # prevents self.sendq fast growing in case of sending fails
                     # in send_data()
@@ -660,9 +658,7 @@ class Sender(threading.Thread):
                     metric = self.process(line)
                     if metric is not None:
                         metrics.append(metric)
-                    else:
-                        continue
-                    byte_count += len(line)
+                        byte_count += len(line)
 
                 self.send_data_via_http(metrics)
                 self.byteSize = byte_count
