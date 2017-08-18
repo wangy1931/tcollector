@@ -11,9 +11,9 @@ record_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../
 log_file_path = 'c:\\opt\\cloudwiz-agent\\altenv\\var\\log\\events.log'
 
 
-class WindowsEvents(CollectorBase):
+class Win32Events(CollectorBase):
     def __init__(self, config, logger, readq):
-        super(WindowsEvents, self).__init__(config, logger, readq)
+        super(Win32Events, self).__init__(config, logger, readq)
 
     def __call__(self):
         try:
@@ -30,7 +30,7 @@ class WindowsEvents(CollectorBase):
                     time_gen = self.fix_date(ev.TimeGenerated)
                     # rewrite to log file
                     f.write(u'{0} {1} {2} {3} {4} {5} {6}\n'.format(
-                        time.strftime('%Y-%m-%d %H:%M:%S.fff', time_gen),
+                        time.strftime('%Y-%m-%d %H:%M:%S', time_gen),
                         ev.ComputerName,
                         ev.EventCode,
                         ev.EventType,
@@ -67,7 +67,7 @@ class WindowsEvents(CollectorBase):
         return time_tuple
 
     def get_last_query(self):
-        with open(record_file_path, 'r') as f:
+        with open(record_file_path, 'w+') as f:
             dt = f.readline()
         return dt
 

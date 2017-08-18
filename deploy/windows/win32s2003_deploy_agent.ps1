@@ -90,7 +90,7 @@ function start_collector($collector_name){
 function start_all_default_collector(){
     $cmd_str="cd c:/opt/cloudwiz-agent/agent & collector_mgr disable all"
     cmd /c $cmd_str
-     $collector_list="summary","win32_host_scan","service_scan","win32_cpustats","win32_dfstats","win32_top_n","win32_iostats","win32_memstats","win32_procstats","win32_netstats"
+     $collector_list="summary","win32_host_scan","service_scan","win32_cpustats","win32_dfstats","win32_top_n","win32_iostats","win32_memstats","win32_procstats","win32_netstats","win32_events"
      foreach($collector in $collector_list){
          start_collector $collector
      }
