@@ -644,8 +644,8 @@ class Sender(threading.Thread):
                     self.count += 1
                     self.readq.nput("%s %d %d" % ("collector.batchCount", time.time(), self.count))
                     continue
-                metric_is_true,metric=self.process(line)
-                if metric_is_true:
+                metric = self.process(line)
+                if metric is not None:
                     metrics.append(metric)
                 else:
                     continue
@@ -657,8 +657,8 @@ class Sender(threading.Thread):
                         line = self.readq.get(False)
                     except Empty:
                         break
-                    metric_is_true, metric = self.process(line)
-                    if metric_is_true:
+                    metric = self.process(line)
+                    if metric is not None:
                         metrics.append(metric)
                     else:
                         continue
@@ -692,7 +692,6 @@ class Sender(threading.Thread):
 
     def process(self, line):
         parts = line.split(None, 3)
-        metric_is_true=True
         # not all metrics have metric-specific tags
         if len(parts) == 4:
             (metric, timestamp, value, raw_tags) = parts
@@ -707,8 +706,7 @@ class Sender(threading.Thread):
                 metric_tags[tag_key] = tag_value
         except:
             LOG.exception("bad tag string. original string: %s", line)
-            metric_is_true=False
-            return (metric_is_true,{})
+            return None
         metric_entry = {}
         metric_entry["metric"] = metric
         metric_entry["timestamp"] = long(timestamp)
@@ -724,7 +722,7 @@ class Sender(threading.Thread):
             LOG.error("Exceeding maximum permitted metric tags - removing %s for metric %s",
                       str(metric_tags_orig - set(metric_tags)), metric)
         metric_entry["tags"].update(metric_tags)
-        return (metric_is_true,metric_entry)
+        return metric_entry
 
     def send_data_via_http(self, metrics):
         data = {'token': self.token, 'metrics': metrics}
