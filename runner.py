@@ -644,8 +644,10 @@ class Sender(threading.Thread):
                     self.count += 1
                     self.readq.nput("%s %d %d" % ("collector.batchCount", time.time(), self.count))
                     continue
-                metrics.append(self.process(line))
-                byte_count += len(line)
+                metric = self.process(line)
+                if metric is not None:
+                    metrics.append(metric)
+                    byte_count += len(line)
                 while byte_count < MAX_SENDQ_SIZE:
                     # prevents self.sendq fast growing in case of sending fails
                     # in send_data()
@@ -653,8 +655,10 @@ class Sender(threading.Thread):
                         line = self.readq.get(False)
                     except Empty:
                         break
-                    metrics.append(self.process(line))
-                    byte_count += len(line)
+                    metric = self.process(line)
+                    if metric is not None:
+                        metrics.append(metric)
+                        byte_count += len(line)
 
                 self.send_data_via_http(metrics)
                 self.byteSize = byte_count
@@ -675,7 +679,6 @@ class Sender(threading.Thread):
                     shutdown()
                     raise
                 LOG.exception('exception in Sender, ignoring')
-                time.sleep(50)
                 continue
             except:
                 LOG.exception('Uncaught exception in Sender, going to exit')
@@ -699,7 +702,7 @@ class Sender(threading.Thread):
                 metric_tags[tag_key] = tag_value
         except:
             LOG.exception("bad tag string. original string: %s", line)
-            raise ValueError("bad formatted metric string")
+            return None
         metric_entry = {}
         metric_entry["metric"] = metric
         metric_entry["timestamp"] = long(timestamp)
