@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 import time
 
-from collectors.lib.inventory.linux_distribution import Distribution
-from collectors.lib.inventory.linux_hardware import LinuxHardware
-from collectors.lib.inventory.linux_platform import Platform
-from collectors.lib.inventory.linux_network import LinuxNetwork
-
 from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
+from collectors.lib.inventory.linux_distribution import Distribution
+from collectors.lib.inventory.linux_hardware import LinuxHardware
+from collectors.lib.inventory.linux_network import LinuxNetwork
+from collectors.lib.inventory.linux_platform import Platform
 from collectors.lib.inventory.linux_virtual import LinuxVirtual
 
 

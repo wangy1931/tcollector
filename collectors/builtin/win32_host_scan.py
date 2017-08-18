@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-import time
-import subprocess
 import copy
+import subprocess
 import sys
+import time
+
+import wmi
 
 from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
-import wmi
 
 
 class WindowsHostScan(CollectorBase):
@@ -107,7 +108,7 @@ class HostParser:
                 self.totalMemory = int(i.TotalPhysicalMemory) / (1024 * 1024)
                 self.hostname = i.DNSHostName
                 self.domain = i.Domain
-                self.fqdn = self.hostname +  '.' + self.domain
+                self.fqdn = self.hostname + '.' + self.domain
 
                 self.productName = i.Model
 
@@ -148,7 +149,8 @@ class HostParser:
                 if i.MACAddress:
                     ip = i.IPAddress
                     if ip and len(ip) > 0 and ip[0] != '127.0.0.1':
-                        adapter[i.MACAddress] = {'key': self.key + '_interface_' + i.Index, 'mac': i.MACAddress, 'ip': ip[0]}
+                        adapter[i.MACAddress] = {'key': self.key + '_interface_' + i.Index, 'mac': i.MACAddress,
+                                                 'ip': ip[0]}
 
             for i in wmi_obj.Win32_NetworkAdapter():
                 if i.MACAddress and adapter.get(i.MACAddress) is not None and i.Speed and i.Speed < sys.maxsize:
@@ -186,7 +188,8 @@ class HostParser:
         try:
             self.memory = []
             for i in wmi_obj.Win32_PhysicalMemory():
-                m = {'key': self.key + '_memory_' + i.DeviceLocator, 'vendor': i.Manufacturer, 'locator': i.DeviceLocator, 'model': i.Model, 'serialNumber': i.SerialNumber}
+                m = {'key': self.key + '_memory_' + i.DeviceLocator, 'vendor': i.Manufacturer,
+                     'locator': i.DeviceLocator, 'model': i.Model, 'serialNumber': i.SerialNumber}
                 if i.Capacity:
                     m['size'] = round(int(i.Capacity) / (1024 * 1024))
                 self.memory.append(m)
