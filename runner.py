@@ -644,7 +644,11 @@ class Sender(threading.Thread):
                     self.count += 1
                     self.readq.nput("%s %d %d" % ("collector.batchCount", time.time(), self.count))
                     continue
-                metrics.append(self.process(line))
+                metric_is_true,metric=self.process(line)
+                if metric_is_true:
+                    metrics.append(metric)
+                else:
+                    continue
                 byte_count += len(line)
                 while byte_count < MAX_SENDQ_SIZE:
                     # prevents self.sendq fast growing in case of sending fails
@@ -653,7 +657,11 @@ class Sender(threading.Thread):
                         line = self.readq.get(False)
                     except Empty:
                         break
-                    metrics.append(self.process(line))
+                    metric_is_true, metric = self.process(line)
+                    if metric_is_true:
+                        metrics.append(metric)
+                    else:
+                        continue
                     byte_count += len(line)
 
                 self.send_data_via_http(metrics)
@@ -675,7 +683,6 @@ class Sender(threading.Thread):
                     shutdown()
                     raise
                 LOG.exception('exception in Sender, ignoring')
-                time.sleep(50)
                 continue
             except:
                 LOG.exception('Uncaught exception in Sender, going to exit')
@@ -685,6 +692,7 @@ class Sender(threading.Thread):
 
     def process(self, line):
         parts = line.split(None, 3)
+        metric_is_true=True
         # not all metrics have metric-specific tags
         if len(parts) == 4:
             (metric, timestamp, value, raw_tags) = parts
@@ -699,7 +707,8 @@ class Sender(threading.Thread):
                 metric_tags[tag_key] = tag_value
         except:
             LOG.exception("bad tag string. original string: %s", line)
-            raise ValueError("bad formatted metric string")
+            metric_is_true=False
+            return (metric_is_true,{})
         metric_entry = {}
         metric_entry["metric"] = metric
         metric_entry["timestamp"] = long(timestamp)
@@ -715,7 +724,7 @@ class Sender(threading.Thread):
             LOG.error("Exceeding maximum permitted metric tags - removing %s for metric %s",
                       str(metric_tags_orig - set(metric_tags)), metric)
         metric_entry["tags"].update(metric_tags)
-        return metric_entry
+        return (metric_is_true,metric_entry)
 
     def send_data_via_http(self, metrics):
         data = {'token': self.token, 'metrics': metrics}
