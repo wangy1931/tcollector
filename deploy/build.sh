@@ -173,7 +173,7 @@ if [[ ! "$skip" = true ]]; then
   log_info 'set up MongoDB module...'
   if [[ ! -f ${workspace_folder}/pymongo-3.4.0.tar.gz ]]; then
     log_info 'download pymongo-3.4.0.tar.gz tarball'
-    wget --directory-prefix="${workspace_folder}" wget https://download.cloudwiz.cn/package/pymongo-3.4.0.tar.gz
+    wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/pymongo-3.4.0.tar.gz
     abort_if_failed 'failed to download pymongo-3.4.0.tar.gz tarball'
   fi
   tar -xzf "${workspace_folder}"/pymongo-3.4.0.tar.gz -C "${workspace_folder}"
