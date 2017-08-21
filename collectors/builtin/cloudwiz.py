@@ -84,19 +84,22 @@ class Cloudwiz(CollectorBase):
             return int(line)
 
     def collect_memory(self, metric, pid, ts_curr):
-        last = None
         proc = subprocess.Popen(['/usr/bin/pmap', '-x', str(pid)], stdout=subprocess.PIPE)
         while True:
             line = proc.stdout.readline()
-            if line == '':
+            if "Total" in line:
+                if "kB" in line:
+                    arr = line.split()
+                    self._readq.nput("%s.memory.total %s %s" % (metric, ts_curr, arr[2]))
+                    self._readq.nput("%s.memory.rss %s %s" % (metric, ts_curr, arr[3]))
+                    self._readq.nput("%s.memory.dirty %s %s" % (metric, ts_curr, arr[4]))
+                else:
+                    arr = line.replace('K','').split()
+                    self._readq.nput("%s.memory.total %s %s" % (metric, ts_curr, arr[1]))
+                    self._readq.nput("%s.memory.rss %s %s" % (metric, ts_curr, arr[2]))
+                    self._readq.nput("%s.memory.dirty %s %s" % (metric, ts_curr, arr[4]))
                 break
-            last =line.lower().replace("k","") if "k" in line.lower() else line
 
-        if last != None and "----" not in last and "total" not in last:
-            arr = last.split()
-            self._readq.nput("%s.memory.total %s %s" % (metric, ts_curr, arr[2]))
-            self._readq.nput("%s.memory.rss %s %s" % (metric, ts_curr, arr[3]))
-            self._readq.nput("%s.memory.dirty %s %s" % (metric, ts_curr, arr[4]))
 
     def get_cpu_total(self):
         total = 0
