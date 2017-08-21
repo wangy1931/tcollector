@@ -170,6 +170,21 @@ if [[ ! "$skip" = true ]]; then
   popd
   log_info 'finish setting up six-1.9.0.tar.gz'
 
+  log_info 'set up MongoDB module...'
+  if [[ ! -f ${workspace_folder}/pymongo-3.4.0.tar.gz ]]; then
+    log_info 'download pymongo-3.4.0.tar.gz tarball'
+    wget --directory-prefix="${workspace_folder}" wget https://download.cloudwiz.cn/package/pymongo-3.4.0.tar.gz
+    abort_if_failed 'failed to download pymongo-3.4.0.tar.gz tarball'
+  fi
+  tar -xzf "${workspace_folder}"/pymongo-3.4.0.tar.gz -C "${workspace_folder}"
+  abort_if_failed 'failed to extract pymongo-3.4.0.tar.gz tarball'
+
+  pushd "${workspace_folder}"/pymongo-3.4.0
+  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
+  abort_if_failed 'failed to install pymongo-3.4.0.tar.gz'
+  popd
+  log_info 'finish setting up pymongo-3.4.0'
+
   log_info 'set up meld3 ...'
   if [[ ! -f ${workspace_folder}/meld3-0.6.5.tar.gz ]]; then
     log_info 'download meld3-0.6.5 tarball'
