@@ -62,7 +62,7 @@ function install_collector_service(){
   $set_dir_to_service="cloudwiz-service.exe set $SERVICE_NAME AppDirectory $root_dir\agent"
   run_cmd $collector_dir $set_dir_to_service
 
-  $set_parameters_to_service="cloudwiz-service.exe set $SERVICE_NAME  AppParameters  --ssl --port 443 --logfile logs\collector.log  -P runs\collector.pid --dedup-interval 0 -H $METRIC_SERVER_HOST"
+  $set_parameters_to_service="cloudwiz-service.exe set $SERVICE_NAME  AppParameters  --ssl --port 443 --logfile ..\altenv\log\collector.log  -P ..\altenv\run\collector.pid --dedup-interval 0 -H $METRIC_SERVER_HOST"
   run_cmd $collector_dir $set_parameters_to_service
 
 }
