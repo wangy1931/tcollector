@@ -4,10 +4,12 @@ import subprocess
 import sys
 import time
 
+import pythoncom
 import wmi
 
 from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
+from collectors.lib.utils import TestQueue
 
 
 class Win32HostScan(CollectorBase):
@@ -16,15 +18,17 @@ class Win32HostScan(CollectorBase):
 
     def __call__(self):
         try:
+            pythoncom.CoInitialize()
             host = HostParser(self._logger)
             host.collect_all()
 
-            utils.alertd_post_sender('/cmdb/agent/host/scan', host.to_CI())
+            utils.alertd_post_sender('/cmdb/agent/host/scan', host.__getstate__())
             self._readq.nput('scan.state %s %s' % (int(time.time()), '0'))
         except Exception as e:
             self.log_error('cannot send host scan result to alertd %s' % e)
             self._readq.nput('scan.state %s %s' % (int(time.time()), '1'))
-
+        finally:
+            pythoncom.CoUninitialize()
 
 class HostParser:
     def __init__(self, logger):
@@ -149,7 +153,7 @@ class HostParser:
                 if i.MACAddress:
                     ip = i.IPAddress
                     if ip and len(ip) > 0 and ip[0] != '127.0.0.1':
-                        adapter[i.MACAddress] = {'key': self.key + '_interface_' + i.Index, 'mac': i.MACAddress,
+                        adapter[i.MACAddress] = {'key': self.key + '_interface_' + str(i.Index), 'mac': i.MACAddress,
                                                  'ip': ip[0]}
 
             for i in wmi_obj.Win32_NetworkAdapter():
@@ -196,11 +200,10 @@ class HostParser:
         except Exception as ae:
             self.log_error('cannot collect memory info %s' % ae)
 
-    def to_CI(self):
-        p = copy.deepcopy(self.__dict__)
-        del p['logger']
-
-        return p
+    def __getstate__(self):
+        d = dict(self.__dict__)
+        del d['logger']
+        return d
 
     def to_date(self, wmi_time):
         time_tuple = wmi.to_time(wmi_time)
@@ -218,3 +221,8 @@ class HostParser:
 
     def log_error(self, msg, *args, **kwargs):
         self.logger.error(msg, *args, **kwargs)
+
+
+if __name__ == "__main__":
+    memstats3_inst = Win32HostScan(None, None, TestQueue())
+    memstats3_inst.__call__()
