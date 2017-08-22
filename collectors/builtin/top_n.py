@@ -42,9 +42,10 @@ class TopN(CollectorBase):
             for line in p.stdout.readlines():
                 self.process(line, metric)
 
-            retval = p.wait()
-            if retval:
-                raise CalledProcessError(retval, "ps -Ao comm,pid,%s,cmd --sort=-%s | head -n %s"%(ps_field, ps_sort_by,self.N), "ps returned code %i" % retval)
+            out, err = p.communicate()
+            if err:
+                raise CalledProcessError(err, "ps -Ao comm,pid,%s,cmd --sort=-%s | head -n %s" % (
+                ps_field, ps_sort_by, self.N), "ps returned %i" % out)
         except OSError as e1:
             self.log_exception("ps -Ao comm,pid,%s,cmd --sort=-%s | head -n %s. [%s]"%(ps_field, ps_sort_by,self.N, e1))
             return
