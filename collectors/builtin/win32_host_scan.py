@@ -10,9 +10,9 @@ from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
 
 
-class WindowsHostScan(CollectorBase):
+class Win32HostScan(CollectorBase):
     def __init__(self, config, logger, readq):
-        super(WindowsHostScan, self).__init__(config, logger, readq)
+        super(Win32HostScan, self).__init__(config, logger, readq)
 
     def __call__(self):
         try:
@@ -24,7 +24,6 @@ class WindowsHostScan(CollectorBase):
         except Exception as e:
             self.log_error('cannot send host scan result to alertd %s' % e)
             self._readq.nput('scan.state %s %s' % (int(time.time()), '1'))
-
 
 
 class HostParser:
