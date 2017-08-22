@@ -78,7 +78,9 @@ def get_user_conf():
     conf_list=user.sections()
     conf_dict_list=[]
     if "conf" in conf_list:
-        return eval(user.get('conf', 'logs'))
+        old_list=eval(user.get('conf', 'logs'))
+        conf_dict_list=conf_dict_list+old_list
+        conf_list.remove("conf")
     for conf_name in conf_list:
         conf_dict_list.append(get_user_conf_dict(user,conf_name))
     return conf_dict_list
