@@ -155,109 +155,9 @@ if [[ ! "$skip" = true ]]; then
   popd
   log_info 'finish setting up setuptools'
 
-  log_info 'set up six module...'
-  if [[ ! -f ${workspace_folder}/six-1.9.0.tar.gz ]]; then
-    log_info 'download six-1.9.0.tar.gz tarball'
-    wget --directory-prefix="${workspace_folder}" https://pypi.python.org/packages/16/64/1dc5e5976b17466fd7d712e59cbe9fb1e18bec153109e5ba3ed6c9102f1a/six-1.9.0.tar.gz#md5=476881ef4012262dfc8adc645ee786c4
-    abort_if_failed 'failed to download six-1.9.0.tar.gz tarball'
-  fi
-  tar -xzf "${workspace_folder}"/six-1.9.0.tar.gz -C "${workspace_folder}"
-  abort_if_failed 'failed to extract six-1.9.0.tar.gz tarball'
-
-  pushd "${workspace_folder}"/six-1.9.0
-  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
-  abort_if_failed 'failed to install six-1.9.0.tar.gz'
-  popd
-  log_info 'finish setting up six-1.9.0.tar.gz'
-
-  log_info 'set up MongoDB module...'
-  if [[ ! -f ${workspace_folder}/pymongo-3.4.0.tar.gz ]]; then
-    log_info 'download pymongo-3.4.0.tar.gz tarball'
-    wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/pymongo-3.4.0.tar.gz
-    abort_if_failed 'failed to download pymongo-3.4.0.tar.gz tarball'
-  fi
-  tar -xzf "${workspace_folder}"/pymongo-3.4.0.tar.gz -C "${workspace_folder}"
-  abort_if_failed 'failed to extract pymongo-3.4.0.tar.gz tarball'
-
-  pushd "${workspace_folder}"/pymongo-3.4.0
-  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
-  abort_if_failed 'failed to install pymongo-3.4.0.tar.gz'
-  popd
-  log_info 'finish setting up pymongo-3.4.0'
-
-  log_info 'set up meld3 ...'
-  if [[ ! -f ${workspace_folder}/meld3-0.6.5.tar.gz ]]; then
-    log_info 'download meld3-0.6.5 tarball'
-    wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/meld3-0.6.5.tar.gz
-    abort_if_failed 'failed to download meld3-0.6.5 tarball'
-  fi
-  tar -xzf "${workspace_folder}"/meld3-0.6.5.tar.gz -C "${workspace_folder}"
-  abort_if_failed 'failed to extract meld3-0.6.5 tarball'
-
-  pushd "${workspace_folder}"/meld3-0.6.5
-  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
-  abort_if_failed 'failed to install meld3'
-  popd
-  log_info 'finish setting up meld3'
-
-  log_info 'set up redisdb ...'
-  if [[ ! -f ${workspace_folder}/redis-2.10.5.tar.gz ]]; then
-    log_info 'download redis-2.10.5 tarball'
-    wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/redis-2.10.5.tar.gz#md5=3b26c2b9703b4b56b30a1ad508e31083
-    abort_if_failed 'failed to download redis-2.10.5 tarball'
-  fi
-  tar -xzf "${workspace_folder}"/redis-2.10.5.tar.gz -C "${workspace_folder}"
-  abort_if_failed 'failed to extract redis-2.10.5 tarball'
-
-  pushd "${workspace_folder}"/redis-2.10.5
-  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
-  abort_if_failed 'failed to install redis-2.10.5'
-  popd
-  log_info 'finish setting up redisdb'
-
-  log_info "set up pymysql ..."
-   if [[ ! -f ${workspace_folder}/PyMySQL-0.7.11.tar.gz ]]; then
-    log_info 'download meld3-0.6.5 tarball'
-    wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/PyMySQL-0.7.11.tar.gz
-    abort_if_failed 'failed to download PyMySQL-0.7.11 tarball'
-  fi
-  tar -xzf "${workspace_folder}"/PyMySQL-0.7.11.tar.gz -C "${workspace_folder}"
-  abort_if_failed 'failed to extract PyMySQL-0.7.11 tarball'
-
-  pushd "${workspace_folder}"/PyMySQL-0.7.11
-  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
-  abort_if_failed 'failed to install PyMySQL-0.7.11'
-  popd
-  log_info "finish setting up pymysql ..."
-
-  log_info 'set up elementtree ...'
-  if [[ ! -f ${workspace_folder}/elementtree-1.2.6-20050316.tar.gz ]]; then
-    log_info 'download elementtree-1.2.6-20050316 tarball'
-    wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/elementtree-1.2.6-20050316.tar.gz
-    abort_if_failed 'failed to download elementtree-1.2.6-20050316  tarball'
-  fi
-  tar -xzf "${workspace_folder}"/elementtree-1.2.6-20050316.tar.gz -C "${workspace_folder}"
-  abort_if_failed 'failed to extract elementtree-1.2.6-20050316.tar.gz tarball'
-
-  pushd "${workspace_folder}"/elementtree-1.2.6-20050316
-  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
-  abort_if_failed 'failed to install elementtree'
-  popd
-  log_info 'finish setting up elementtree'
-
-  log_info 'set up supervisord ...'
-  if [[ ! -f ${workspace_folder}/supervisor-3.2.2.tar.gz ]]; then
-    log_info 'download supervisor-3.2.2 tarball'
-    wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/supervisor-3.2.2.tar.gz#md5=bf1c8877f2ace04d62665a7c6e351219
-    abort_if_failed 'failed to download supervisor-3.2.2 tarball'
-  fi
-  tar -xzf "${workspace_folder}"/supervisor-3.2.2.tar.gz -C "${workspace_folder}"
-  abort_if_failed 'failed to extract supervisor-3.2.2 tarball'
-
-  pushd "${workspace_folder}"/supervisor-3.2.2
-  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
-  abort_if_failed 'failed to install supervisor-3.2.2'
-  popd
+  log_info 'pip install packages'
+  "${altenv_bin_folder}"/easy_install -i http://mirrors.aliyun.com/pypi/simple --prefix="${altenv_folder}" `cat requirement.txt`
+  abort_if_failed 'failed to pip install packages'
 
   yes | cp -f "${basedir}/supervisord.conf" "${altenv_etc_folder}/supervisord.conf"
   abort_if_failed "failed to copy supervisord conf file"
@@ -265,45 +165,6 @@ if [[ ! "$skip" = true ]]; then
   abort_if_failed "failed to config supervisord.conf"
   log_info 'finish setting up supervisord and its dependencies'
 
-  log_info 'set up psutil ...'
-  if [[ ! -f ${workspace_folder}/psutil-2.1.3.tar.gz ]]; then
-    log_info 'download psutil-2.1.3 tarball'
-    wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/psutil-2.1.3.tar.gz
-  fi
-  tar -xzf "${workspace_folder}"/psutil-2.1.3.tar.gz -C "${workspace_folder}"
-  abort_if_failed 'failed to extact psutil'
-  pushd "${workspace_folder}"/psutil-2.1.3
-  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
-  abort_if_failed 'failed to install psutil'
-  popd
-  log_info 'finish setting up psutil'
-
-  log_info 'set up python-gnupg ...'
-  if [[ ! -f ${workspace_folder}/python-gnupg-0.3.8.tar.gz ]]; then
-    log_info 'download python-gnupg-0.3.8 tarball'
-    wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/python-gnupg-0.3.8.tar.gz
-  fi
-  tar -xzf "${workspace_folder}"/python-gnupg-0.3.8.tar.gz -C "${workspace_folder}"
-  abort_if_failed 'failed to extact gnupg'
-  pushd "${workspace_folder}"/python-gnupg-0.3.8
-  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
-  abort_if_failed 'failed to install gnupg'
-  popd
-  log_info 'finish setting up gnupg'
-
-  log_info 'set up requests ...'
-  if [[ ! -f ${workspace_folder}/python-requests.tar.gz ]]; then
-    log_info 'download python-requests tarball'
-    wget -O "${workspace_folder}/python-requests.tar.gz" https://download.cloudwiz.cn/package/master
-  fi
-  mkdir -p ${workspace_folder}/python-requests
-  tar -xzf "${workspace_folder}"/python-requests.tar.gz -C "${workspace_folder}/python-requests" --strip-components=1
-  abort_if_failed 'failed to extact python requests'
-  pushd "${workspace_folder}"/python-requests
-  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
-  abort_if_failed 'failed to install python requests'
-  popd
-  log_info 'finish setting up requests'
 
   log_info 'set up filebeat ...'
   fb_tarball="filebeat-5.4.2-linux-${bitness}.tar.gz"
@@ -336,21 +197,6 @@ if [[ ! "$skip" = true ]]; then
     log_info "download net-snmp-utils-5.5-57.el6_8.1.x86_64.rpm"
     wget -O ${workspace_folder}/net-snmp-utils-5.5-57.el6_8.1.x86_64.rpm https://download.cloudwiz.cn/package/net-snmp-utils-5.5-57.el6_8.1.x86_64.rpm
   fi
-
-  log_info 'set up docker SDK...'
-  if [[ ! -f ${workspace_folder}/docker-2.3.0.tar.gz ]]; then
-    log_info 'download docker-2.3.0 tarball'
-    wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/docker-2.3.0.tar.gz
-    abort_if_failed 'failed to download docker-2.3.0 tarball'
-  fi
-  tar -xzf "${workspace_folder}"/docker-2.3.0.tar.gz -C "${workspace_folder}"
-  abort_if_failed 'failed to extract docker-2.3.0 tarball'
-
-  pushd "${workspace_folder}"/docker-2.3.0
-  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
-  abort_if_failed 'failed to install docker-2.3.0'
-  popd
-  log_info 'finish setting up docker-2.3.0'
 fi
 
 log_info "setup agent/runner ${collector_source_path} => ${agent_collector_folder}"
