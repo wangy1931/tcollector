@@ -44,23 +44,18 @@ class CpusPctusage(CollectorBase):
         super(CpusPctusage, self).__init__(config, logger, readq)
         collection_interval = self.get_config('interval')
         os.environ['LANG'] = "en_US.UTF-8"
-        self.is_new_top=False
+        self.is_new_top = False
         try:
+
             if utils.which_linux_command("mpstat"):
-                self.p_top = subprocess.Popen(
-                    ["mpstat", "-P", "ALL", str(collection_interval)],
-                    stdout=subprocess.PIPE,shell=True
-                )
+                self.p_top =  utils.get_linux_command(["mpstat", "-P", "ALL", str(collection_interval)])
             else:
                 if platform.system() == "FreeBSD":
-                    self.p_top = subprocess.Popen(
-                        ["top", "-t", "-I", "-P", "-n", "-s" + str(collection_interval),
-                         "-d" + str((365 * 24 * 3600) / collection_interval)],
-                        stdout=subprocess.PIPE,shell=True
-                    )
+                    self.p_top = utils.get_linux_command(["top", "-t", "-I", "-P", "-n", "-s" + str(collection_interval),
+                         "-d" + str((365 * 24 * 3600) / collection_interval)])
                 else:
-                    self.p_top = subprocess.Popen(["top", "-b","-d "+str(collection_interval)], stdout=subprocess.PIPE)
-                    self.is_new_top=True
+                    self.p_top = utils.get_linux_command(["top", "-b","-d "+str(collection_interval)])
+                    self.is_new_top = True
 
         except OSError:
             self._readq.nput("cpu.state %s %s" % (int(time.time()), '1'))
