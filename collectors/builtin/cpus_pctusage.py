@@ -43,14 +43,15 @@ class CpusPctusage(CollectorBase):
         collection_interval = self.get_config('interval')
         os.environ['LANG'] = "en_US.UTF-8"
         try:
-            if platform.system() == "FreeBSD":
-                self.p_top = subprocess.Popen(
-                    ["top", "-t", "-I", "-P", "-n", "-s" + str(collection_interval), "-d" + str((365*24*3600) / collection_interval)],
-                    stdout=subprocess.PIPE,
-                )
-            else:
+            try:
                 self.p_top = subprocess.Popen(
                     ["mpstat", "-P", "ALL", str(collection_interval)],
+                    stdout=subprocess.PIPE,
+                )
+            except:
+                self.p_top = subprocess.Popen(
+                    ["top", "-t", "-I", "-P", "-n", "-s" + str(collection_interval),
+                     "-d" + str((365 * 24 * 3600) / collection_interval)],
                     stdout=subprocess.PIPE,
                 )
         except OSError:
