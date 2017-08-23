@@ -84,18 +84,22 @@ class Cloudwiz(CollectorBase):
             return int(line)
 
     def collect_memory(self, metric, pid, ts_curr):
-        last = None
         proc = subprocess.Popen(['/usr/bin/pmap', '-x', str(pid)], stdout=subprocess.PIPE)
         while True:
             line = proc.stdout.readline()
-            if line == '':
+            if "Total" in line:
+                if "kB" in line:
+                    arr = line.split()
+                    self._readq.nput("%s.memory.total %s %s" % (metric, ts_curr, arr[2]))
+                    self._readq.nput("%s.memory.rss %s %s" % (metric, ts_curr, arr[3]))
+                    self._readq.nput("%s.memory.dirty %s %s" % (metric, ts_curr, arr[4]))
+                else:
+                    arr = line.replace('K','').split()
+                    self._readq.nput("%s.memory.total %s %s" % (metric, ts_curr, arr[1]))
+                    self._readq.nput("%s.memory.rss %s %s" % (metric, ts_curr, arr[2]))
+                    self._readq.nput("%s.memory.dirty %s %s" % (metric, ts_curr, arr[4]))
                 break
-            last = line
-        if last != None:
-            arr = last.split()
-            self._readq.nput("%s.memory.total %s %s" % (metric, ts_curr, arr[2]))
-            self._readq.nput("%s.memory.rss %s %s" % (metric, ts_curr, arr[3]))
-            self._readq.nput("%s.memory.dirty %s %s" % (metric, ts_curr, arr[4]))
+
 
     def get_cpu_total(self):
         total = 0
@@ -184,4 +188,5 @@ class Cloudwiz(CollectorBase):
         except Exception as e:
             self._readq.nput("cloudwiz.state %s %s" % (ts_curr, '1'))
             self.log_error("Exception when collecting cloudwiz metrics\n%s" % e)
-
+if __name__ == "__main__":
+    test=" cloudwiz.supervisord.memory.dirty 1503055118 0K"
