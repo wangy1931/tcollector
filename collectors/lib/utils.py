@@ -188,12 +188,15 @@ def load_runner_conf():
 def which_linux_command(command):
     cmd = ["which"]
     cmd.append(command)
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE,shell=True)
+    p = get_linux_command(cmd)
     res = p.stdout.readlines()
     p.kill()
     if len(res) == 0:
         return False
     return True
+
+def get_linux_command(cmd):
+    return subprocess.Popen(cmd, stdout=subprocess.PIPE,shell=True)
 
 class TestQueue(Queue):
     def nput(self, value):
