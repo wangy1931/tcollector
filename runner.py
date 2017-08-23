@@ -298,6 +298,10 @@ def parse_cmdline(argv):
                       default=defaults['dryrun'],
                       help='Don\'t actually send anything to the TSD, '
                            'just print the datapoints.')
+    parser.add_option('-T', '--dry-run-test-metric', dest='dtestmetric', action='store_true',
+                      default=defaults['dtestmetric'],
+                      help='Don\'t actually send anything to the TSD, '
+                           'just print the datapoints and output one time.')
     parser.add_option('-D', '--daemonize', dest='daemonize', action='store_true',
                       default=defaults['daemonize'],
                       help='Run as a background daemon.')
@@ -398,6 +402,7 @@ def get_defaults():
         'dedupinterval': 300,
         'allowed_inactivity_time': 600,
         'dryrun': False,
+        'dtestmetric':False,
         'maxtags': 8,
         'max_bytes': 64 * 1024 * 1024,
         'http_password': False,
@@ -610,8 +615,10 @@ class Sender(threading.Thread):
         self.tags = tags
         self.maxtags = options.maxtags
         self.dryrun = options.dryrun
+        self.dtestmetric = options.dtestmetric
         self.current_tsd = -1
         self.count = 0
+        self.test_count=0
         self.byteSize = 0
         self.blacklisted_hosts = set()
         random.shuffle(self.hosts)
@@ -710,6 +717,8 @@ class Sender(threading.Thread):
             metric_entry["value"] = long(value)
         except:
             metric_entry["value"] = float(value)
+
+
         metric_entry["tags"] = dict(self.tags).copy()
         if len(metric_tags) + len(metric_entry["tags"]) > self.maxtags:
             metric_tags_orig = set(metric_tags)
@@ -722,10 +731,17 @@ class Sender(threading.Thread):
 
     def send_data_via_http(self, metrics):
         data = {'token': self.token, 'metrics': metrics}
+        if self.dtestmetric:
+            self.test_metrics(metrics)
+            if "collector" not in  metrics[0]['metric'] or self.test_count >2:
+                exit(1)
+            else:
+                self.test_count+=1
+                return
         if self.dryrun:
-            print "Would have sent:\n%s" % json.dumps(data,
-                                                      sort_keys=True,
-                                                      indent=4)
+            print "Would have send:\n%s"%json.dumps(data,
+                                                    sort_keys=True,
+                                                    indent=4)
             return
 
         if (self.current_tsd == -1) or (len(self.hosts) > 1):
@@ -806,6 +822,20 @@ class Sender(threading.Thread):
            will be no more healthy hosts."""
         LOG.info('Blacklisting %s:%s for a while', self.host, self.port)
         self.blacklisted_hosts.add((self.host, self.port))
+    def test_metrics(self,metrics):
+
+        metric_dict = {'metric_name_count':{}}
+        for metric in metrics:
+            name = metric['metric']
+            if '.state' in name:
+                metric_dict[name]=metric['value']
+            elif not  metric_dict['metric_name_count'].has_key(name):
+                metric_dict['metric_name_count'][name]=1
+            else:
+                metric_dict['metric_name_count'][name] += 1
+
+        print metric_dict
+
 
 
 if __name__ == '__main__':
