@@ -89,7 +89,7 @@ class Cloudwiz(CollectorBase):
             line = proc.stdout.readline()
             if line == "":
                 break
-            if "Total" in line:
+            if "total" in line.lower():
                 if "kB" in line:
                     arr = line.split()
                     self._readq.nput("%s.memory.total %s %s" % (metric, ts_curr, arr[2]))
