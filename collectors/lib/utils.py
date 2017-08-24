@@ -185,18 +185,6 @@ def load_runner_conf():
     runner_config.read(runner_config_path)
     return runner_config
 
-def which_linux_command(command):
-    cmd = ["which"]
-    cmd.append(command)
-    p = get_linux_command(cmd)
-    res = p.stdout.readlines()
-    p.kill()
-    if len(res) == 0:
-        return False
-    return True
-
-def get_linux_command(cmd):
-    return subprocess.Popen(cmd, stdout=subprocess.PIPE,shell=True)
 
 class TestQueue(Queue):
     def nput(self, value):
@@ -217,5 +205,3 @@ class TestLogger(object):
     def exception(self, msg, *args, **kwargs):
         sys.stderr.write("ERROR: " + msg % args)
 
-if __name__ == "__main__":
-    print which_linux_command("mpstat")
