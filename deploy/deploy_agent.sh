@@ -51,9 +51,9 @@ function get_os() {
 	distribution=$(lsb_release -d 2>/dev/null | grep -Eo $known_distribution  || grep -Eo $known_distribution /etc/issue 2>/dev/null || uname -s)
 	if [ $distribution = "Darwin" ]; then
 			OS="Darwin"
-	elif [ -f /etc/debian_version -o "$distribution" == "Debian" ]; then
+	elif [ -f /etc/debian_version -a "$distribution" == "Debian" ]; then
 			OS="Debian"
-	elif [ -f /etc/debian_version -o "$distribution" == "Ubuntu" ]; then
+	elif [ -f /etc/debian_version -a "$distribution" == "Ubuntu" ]; then
 			OS="Ubuntu"
     elif [ -f /etc/redhat-release -o "$distribution" == "RedHat" -o "$distribution" == "CentOS" -o "$distribution" == "openSUSE" -o "$distribution" == "Amazon" ]; then
 			OS="RedHat"
