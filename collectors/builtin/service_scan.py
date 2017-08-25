@@ -1,5 +1,4 @@
 import psutil
-import socket
 import time
 
 from collectors.lib import utils
@@ -17,7 +16,7 @@ class ServiceScan(CollectorBase):
 
             for proc in psutil.process_iter():
                 try:
-                    all_proc.append(" ".join(proc.cmdline()))
+                    all_proc.append((" ".join(proc.cmdline())).encode('utf-8').strip())
                 except:
                     pass
                     all_proc.append(proc.name())
