@@ -29,8 +29,8 @@ import pythoncom
 from win32com.client import Dispatch
 
 # project
-from checks.libs.wmi.counter_type import get_calculator, get_raw, UndefinedCalculator
-from utils.timeout import timeout, TimeoutException
+from collectors.lib.checks.libs.wmi.counter_type import get_calculator, get_raw, UndefinedCalculator
+from collectors.lib.checks.utils.timeout import timeout, TimeoutException
 
 
 class CaseInsensitiveDict(dict):
