@@ -26,7 +26,7 @@ import glob
 from Queue import Queue
 
 from collectors.lib.collectorbase import CollectorBase
-import checks.system.win32 as w32
+import collectors.lib.checks.system.win32 as w32
 
 
 class Win32Memstats(CollectorBase):

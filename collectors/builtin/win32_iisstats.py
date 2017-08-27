@@ -24,7 +24,7 @@ import sys
 import time
 import glob
 from Queue import Queue
-from checks.libs.wmi.sampler import WMISampler
+from collectors.lib.checks.libs.wmi.sampler import WMISampler
 from functools import partial
 import logging
 import numbers
