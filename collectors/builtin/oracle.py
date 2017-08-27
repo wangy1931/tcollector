@@ -2,12 +2,12 @@
 
 import cx_Oracle
 import time
+from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
 
-
-# 默认配置了很多 sql 语句, 也可以动态加入.
-# 通过 |  来切分.
-# 默认前两个位置标识 metricsname 和 val 后面默认为是tag , 同时sql 查询出来的位置也要吻合.
+# you can add your sql to get metrics .
+# try to use [ | ] to cut the string.
+# in this case the first and second is  metrics name and val . after all is tags
 
 class Oracle(CollectorBase):
     def __init__(self, config, logger, readq):
@@ -25,6 +25,12 @@ class Oracle(CollectorBase):
         del section["collectorclass"]
         self.sqls = section
 
+        customize_section = dict(self._config.items("customize"))
+        del customize_section["interval"]
+        del customize_section["enabled"]
+        del customize_section["collectorclass"]
+        self.customize = customize_section
+
     def __call__(self):
         try:
             self.db_connect()
@@ -37,7 +43,34 @@ class Oracle(CollectorBase):
                         if res[0] is not None:
                             self._readq.nput("oracle.%s %s %s" % (metric ,int(time.time()), res[0]))
                     except Exception as e:
-                        self.log_error("Some exception when execute exception, key=%s /n %s" % (key,e))
+                        self.log_error("Some exception when execute exception, key=%s  %s" % (key,e))
+                        pass
+
+                for cus_key,cus_sql in self.customize.iteritems():
+                    try:
+                        self.cur.execute(cus_sql)
+                        res = self.cur.fetchall()
+                        customer = cus_key.split("|")
+                        cus_metric = customer[0]
+
+                        for row in res:
+                            i = 1
+                            tags_str = " "
+
+                            for col in row[1:]:
+                                tag_key = customer[i+1]
+                                tag_val = utils.remove_invalid_characters(str(col))
+                                tags_str = tags_str + " %s=%s" %(tag_key, tag_val)
+                                i = i+1
+
+                            self.log_info(cus_metric)
+                            self.log_info(row[0])
+                            self.log_info(tags_str)
+                            self._readq.nput("oracle.%s %s %s %s" % (cus_metric ,int(time.time()), row[0], tags_str))
+
+
+                    except Exception as e:
+                        self.log_error("Some exception when customer sql execute exception, key=%s  %s" % (cus_key,e))
                         pass
 
                 self._readq.nput("oracle.state %s 0" % int(time.time()))
