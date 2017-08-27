@@ -144,7 +144,7 @@ class Check(object):
     def save_sample(self, metric, value, timestamp=None, tags=None, hostname=None, device_name=None):
         """Save a simple sample, evict old values if needed
         """
-        from util import cast_metric_val
+        from collectors.lib.checks.util import cast_metric_val
 
         if timestamp is None:
             timestamp = time.time()

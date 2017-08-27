@@ -22,7 +22,7 @@ except Exception:
         return
 
 # datadog
-from utils.timeout import TimeoutException
+from collectors.lib.checks.utils.timeout import TimeoutException
 
 
 # Device WMI drive types
