@@ -112,13 +112,13 @@ def remove_invalid_characters(str):
 
 
 def get_pid_and_user_by_pname(process_unique_string):
-    commond_line = "ps -ef | grep %s | awk '{print $1\",\"$2}'" % process_unique_string
+    commond_line = "ps -ef | grep -e %s | awk '{print $1\",\"$2}'" % process_unique_string
     pid_user_cmds = subprocess.check_output(commond_line, shell=True).split('\n')
 
     for pid_user_cmd in pid_user_cmds:
         if pid_user_cmd != '' and 'grep' not in pid_user_cmd:
             pid_user_info_list = pid_user_cmd.split(",")
-            return (pid_user_info_list[0]),pid_user_info_list[1]
+            return pid_user_info_list[1],pid_user_info_list[0]
 
     return None, None
 
