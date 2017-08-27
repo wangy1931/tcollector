@@ -44,6 +44,10 @@ message="failed to set ORG_TOKEN value in runner.conf file\n"
 set_token=edit_file
 abort_if_failed(set_token,message,re='^token *=.*',replace_string='token=%s'%ORG_TOKEN)
 
+message="failed to set alertd_server_and_port value in runner.conf file\n"
+set_alertd=edit_file
+abort_if_failed(set_token,message,re='^alertd_server_and_port *=.*',replace_string='alertd_server_and_port=%s'%ALERTD_SERVER)
+
 set_metric_server_host=edit_file
 message="failed to set_metric_server_host "
 abort_if_failed(set_metric_server_host,message,re='^host*=.*',replace_string='host=%s'%METRIC_SERVER_HOST)

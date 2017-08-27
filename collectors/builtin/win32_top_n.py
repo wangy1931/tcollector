@@ -28,6 +28,7 @@ from checks.libs.wmi.sampler import WMISampler
 from functools import partial
 import logging
 import numbers
+import psutil
 
 from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
@@ -52,7 +53,7 @@ class Win32TopN(CollectorBase):
         for metric in metrics:
             id = metric.get("IDProcess")
             name = metric.get("Name")
-            cpuPct = metric.get("PercentProcessorTime")
+            cpuPct = metric.get("PercentProcessorTime")/psutil.cpu_count()
             memBytes = metric.get("PrivateBytes")
             process = (id, name, cpuPct, memBytes)
             processes.append(process)

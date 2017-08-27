@@ -60,7 +60,7 @@ filebeat.prospectors:
 #-------------------------- Kafka output ------------------------------
 output.kafka:
   # Array of hosts to connect to.
-  hosts: [<log-server-host-port>]
+  hosts: ['<log-server-host-port>']
   ssl.enabled: true
   version: "0.10"
   topic: 'filebeat.%{[orgid]}.%{[sysid]}'

@@ -24,7 +24,7 @@ function start_service($service_name){
     {$_ -eq "cloudwiz-agent:filebeat" -or $_ -eq "all" }{
         $filebeat=get_service "cloudwiz-agent:filebeat" ;
         if ($filebeat){
-            $cmd_str="cd /opt/cloudwiz-agent/agent & filebeat_conf.exe";
+            $cmd_str="cd /opt/cloudwiz-agent/agent & filebeat_conf_imp.exe";
             cmd /c $cmd_str;
             $filebeat_obj=get_service_obj "cloudwiz-agent:filebeat";
             $filebeat_obj.startService();

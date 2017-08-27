@@ -10,13 +10,13 @@ files=["runner.conf",
 
 buildOptions = dict(include_files=files)
 
-build_exe_options = {"packages": ["pyodbc","checks"],"include_files":files}
+build_exe_options = {"packages": ["pyodbc","checks","urllib","urllib3","win32com","config","getpass","os","psutil","platform","wmi"],"include_files":files}
 
 executables = [
-    Executable('runner.py'),
+    Executable('runner.py',targetName="runner.exe"),
     Executable('collector_mgr.py',targetName="collector_mgr.exe"),
     Executable('deploy/windows/windows_deploy.py',targetName="windows_deploy.exe"),
-    Executable("deploy/windows/filebeat_conf.py",targetName="filebeat_conf.exe")
+    Executable("deploy/windows/filebeat_conf_imp.py")
 ]
 
 setup(name='cloudwiz-agent',

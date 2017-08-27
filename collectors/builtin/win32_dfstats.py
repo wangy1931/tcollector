@@ -35,6 +35,10 @@ from collectors.lib.collectorbase import CollectorBase
 
 class Win32Dfstats(CollectorBase):
 
+    LINUX_MERTICS = {
+        "freespace": "df.bytes.free",
+        "size": "df.bytes.total"
+    }
     def __init__(self, config, logger, readq):
         super(Win32Dfstats, self).__init__(config, logger, readq)
         # log = logging.getLogger("C:\\logs\\test.log")
@@ -58,6 +62,8 @@ class Win32Dfstats(CollectorBase):
             for key, value in metric.iteritems():
                 if isinstance(value, numbers.Number):
                     self._readq.nput("system.fs.%s %d %f drive=%s" % (key, ts, value, drive))
+                    if self.LINUX_MERTICS.has_key(key):
+                        self._readq.nput("%s %d %f drive=%s" % (self.LINUX_MERTICS.get(key), ts, value, drive))
 
 
 if __name__ == "__main__":

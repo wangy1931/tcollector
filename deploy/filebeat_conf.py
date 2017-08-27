@@ -64,7 +64,7 @@ def set_filebeat_yml(common,user_conf):
 
              else:
                  write_date+=line
-    with open(runner_config_path+'/filebeat.yml','wr') as f:
+    with open(runner_config_path+'/filebeat.yml','w') as f:
         f.writelines(write_date)
 
 def get_user_conf_dict(config,config_name):

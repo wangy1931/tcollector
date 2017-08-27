@@ -29,20 +29,23 @@ from Queue import Queue
 from collectors.lib.collectorbase import CollectorBase
 import checks.system.win32 as w32
 
-class Win32Cpustats3(CollectorBase):
+class Win32Cpustats(CollectorBase):
 
     def __init__(self, config, logger, readq):
-        super(Win32Cpustats3, self).__init__(config, logger, readq)
+        super(Win32Cpustats, self).__init__(config, logger, readq)
 
     def __call__(self):
         ts = int(time.time())
         cpu_percent = psutil.cpu_times_percent()
 
         self._readq.nput('system.cpu.user %d %f' % (ts, cpu_percent.user / psutil.cpu_count()))
+        self._readq.nput('cpu.usr %d %f' % (ts, cpu_percent.user / psutil.cpu_count()))
         self._readq.nput('system.cpu.idle %d %f' % (ts, cpu_percent.idle / psutil.cpu_count()))
         self._readq.nput('system.cpu.system %d %f' % (ts, cpu_percent.system / psutil.cpu_count()))
-        self._readq.nput('system.cpu.interrupt %d %f' % (ts, cpu_percent.interrupt / psutil.cpu_count()))
-
+        try:
+             self._readq.nput('system.cpu.interrupt %d %f' % (ts, cpu_percent.interrupt / psutil.cpu_count()))
+        except Exception,e:
+             pass
     def xxx__call__(self):
         cpu = w32.Cpu(None)
         config = dict( device_blacklist_re=None )
@@ -58,5 +61,5 @@ class Win32Cpustats3(CollectorBase):
 
 
 if __name__ == "__main__":
-    cpustats3_inst = Win32Cpustats3(None, None, Queue())
+    cpustats3_inst = Win32Cpustats(None, None, Queue())
     cpustats3_inst()
