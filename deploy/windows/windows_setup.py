@@ -10,7 +10,7 @@ files=["runner.conf",
 
 buildOptions = dict(include_files=files)
 
-build_exe_options = {"packages": ["pyodbc","checks","urllib","urllib3","win32com","config","getpass","os","psutil","platform","wmi"],"include_files":files}
+build_exe_options = {"packages": ["pyodbc","urllib","urllib3","win32com","config","getpass","os","psutil","platform","wmi"],"include_files":files}
 
 executables = [
     Executable('runner.py',targetName="runner.exe"),
