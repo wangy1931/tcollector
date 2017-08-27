@@ -13,7 +13,7 @@ class Weblogic(CollectorBase):
             raise LookupError("process_names must be set in collector config file")
 
         for server in self.servers:
-            self.weblogic_collectors[server['name']] = WeblogicWarper(config, logger, readq, server['process'], server['name'], server['port'])
+            self.weblogic_collectors[server['name']] = WeblogicWarper(config, logger, readq, server['process'], server['name'], int(server['port']))
 
     def __call__(self, *args, **kwargs):
         for process_name, warper in self.weblogic_collectors.iteritems():
@@ -21,9 +21,9 @@ class Weblogic(CollectorBase):
                 self.log_info("collect for weblogic  %s", process_name)
                 self._readq.nput("weblogic.state %s %s" % (int(time.time()), '0'))
                 warper()
-            except:
+            except Exception as e:
                 self._readq.nput("weblogic.state %s %s" % (int(time.time()), '1'))
-                self.log_error("failed to weblogic  collect for application %s", process_name)
+                self.log_error("failed to weblogic  collect for application %s, %s" %(process_name, e))
 
 class WeblogicWarper(JolokiaAgentCollectorBase):
     JMX_REQUEST_JSON = r'''[
@@ -97,12 +97,13 @@ class WeblogicWarper(JolokiaAgentCollectorBase):
             "java.lang:type=Threading": WeblogicThreadStatus(logger, server_name),
             "java.lang:type=ClassLoading": WeblogicClassLoader(logger, server_name),
             "com.bea:ServerRuntime=*,Name=ThreadPoolRuntime,Type=ThreadPoolRuntime": WeblogicThreadPoolRuntime(logger, server_name),
-            "java.lang:name=PS Scavenge,type=GarbageCollector": "JolokiaGCParser",
+            "java.lang:name=PS Scavenge,type=GarbageCollector": JolokiaGCParser(logger, server_name),
             "com.bea:ServerRuntime=*,Name=JTARuntime,Type=JTARuntime": WeblogicJTARuntime(logger, server_name),
             "com.bea:ServerRuntime=*,Name=*,Type=JDBCDataSourceRuntime": WeblogicJDBCDataSourceRuntime(logger, server_name),
             "com.bea:ServerRuntime=*,Name=*,ApplicationRuntime=*,Type=EJBPoolRuntime,EJBComponentRuntime=*,*": WeblogicEJBPoolRuntime(logger, server_name),
         }
         super(WeblogicWarper, self).__init__(config, logger, readq, WeblogicWarper.JMX_REQUEST_JSON, parsers, process_name, WeblogicWarper.CHECK_WEBLOGIC_CONSUMER_PID_INTERVAL, port)
+        self.log_info("weblogic warpper init : %s", server_name)
 
 
 class WeblogicThreadStatus(JolokiaParserBase):
@@ -204,7 +205,7 @@ class WeblogicEJBPoolRuntime(JolokiaParserBase):
 
 
 class JolokiaGCParser(JolokiaParserBase):
-    def __init__(self, logger):
+    def __init__(self, logger, server_name):
         self.additional_tags = "server=%s" % server_name
         super(JolokiaGCParser, self).__init__(logger)
 
@@ -223,9 +224,6 @@ class JolokiaGCParser(JolokiaParserBase):
         codecache_dict = json_dict["value"]["LastGcInfo"]["memoryUsageAfterGc"]["Code Cache"]
         metrics_dict.update({"codecache." + key: codecache_dict[key] for key in codecache_dict.keys()})
 
-        permgen_dict = json_dict["value"]["LastGcInfo"]["memoryUsageAfterGc"]["PS Perm Gen"]
-        metrics_dict.update({"permgen." + key: permgen_dict[key] for key in permgen_dict.keys()})
-
         metrics_dict.update({"GcThreadCount": json_dict["value"]["LastGcInfo"]["GcThreadCount"]})
         metrics_dict.update({"CollectionCount": json_dict["value"]["CollectionCount"]})
         metrics_dict.update({"CollectionTime": json_dict["value"]["CollectionTime"]})
@@ -237,8 +235,7 @@ class JolokiaGCParser(JolokiaParserBase):
                 "survivorspace.max", "survivorspace.committed", "survivorspace.init", "survivorspace.used",
                 "edenspace.max", "edenspace.committed", "edenspace.init", "edenspace.used",
                 "oldgen.max", "oldgen.committed", "oldgen.init", "oldgen.used",
-                "codecache.max", "codecache.committed", "codecache.init", "codecache.used",
-                "permgen.max", "permgen.committed", "permgen.init", "permgen.used"]
+                "codecache.max", "codecache.committed", "codecache.init", "codecache.used"]
 
     def metric_name(self, name):
         return "%s.%s" % ("weblogic.scavenge.gc", name)
