@@ -4,7 +4,7 @@ from cx_Freeze import setup, Executable
 # collectors_files=["builtin","conf","etc","lib","__init__.py"]
 files=["runner.conf",
        "collectors/",
-       "logs/","runs/",
+       "deploy/windows/altenv",
        "lib/cloudwiz-service.exe"]
 
 
