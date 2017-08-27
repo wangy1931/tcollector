@@ -11,7 +11,7 @@ from jolokia import JolokiaCollector
 class JolokiaAgentCollectorBase(JolokiaCollector):
     JOLOKIA_JAR = "jolokia-jvm-1.3.5-agent.jar"
 
-    def __init__(self, config, logger, readq, jmx_request_json, parsers, processname,process_pattern,check_pid_interval, port):
+    def __init__(self, config, logger, readq, jmx_request_json, parsers, processname,check_pid_interval, port):
         protocol = "http"
         self.port = port
         super(JolokiaAgentCollectorBase, self).__init__(config, logger, readq, protocol, self.port, jmx_request_json, parsers)
@@ -21,7 +21,6 @@ class JolokiaAgentCollectorBase(JolokiaCollector):
         if not os.path.isfile(self.jolokia_file_path):
             raise IOError("failed to find jolokia jar at %s" % self.jolokia_file_path)
         self.process_name = processname
-        self.process_pattern = process_pattern
         self.check_pid_interval = check_pid_interval
         self.checkpid_time = 0
         self.process_pid = -1
@@ -31,7 +30,7 @@ class JolokiaAgentCollectorBase(JolokiaCollector):
         curr_time = time.time()
         if curr_time - self.checkpid_time >= self.check_pid_interval:
             self.checkpid_time = curr_time
-            pid, puser = utils.get_pid_and_user_by_pname(self.process_pattern)
+            pid, puser = utils.get_pid_and_user_by_pname(self.process_name)
             if pid is None and puser is None:
                 raise Exception("failed to find %s process, One of the (pid, puser) pair is None (%s, %s)" % (self.process_name, str(pid), str(puser)))
             if self.process_pid != pid:

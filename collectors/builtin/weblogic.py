@@ -158,7 +158,7 @@ class WeblogicJTARuntime(JolokiaParserBase):
 
 class WeblogicJDBCDataSourceRuntime(JolokiaParserBase):
     def __init__(self, logger, server_name):
-        super(WeblogicClassLoader, self).__init__(logger)
+        super(WeblogicJDBCDataSourceRuntime, self).__init__(logger)
         self.metrics = [
             "NumAvailable",
             "CurrCapacity",
