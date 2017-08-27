@@ -2,7 +2,6 @@ import os
 import json
 import platform
 import time
-import socket
 from time import localtime, strftime
 from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
@@ -32,7 +31,7 @@ class Summary(CollectorBase):
 
         ip = None
         try:
-            ip = self.get_ip()
+            ip = utils.get_ip(self._logger)
         except Exception:
             self.log_error("can't get ip address")
 
@@ -74,11 +73,3 @@ class Summary(CollectorBase):
             pass
 
         return conf_json
-
-    def get_ip(self):
-        try:
-            ip = socket.gethostbyname(socket.gethostname())
-        except:
-            return None
-        # we need one of the ip address
-        return ip

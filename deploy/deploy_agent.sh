@@ -47,7 +47,7 @@ function log_info() {
 function get_os() {
 	# OS/Distro Detection
 	# Try lsb_release, fallback with /etc/issue then uname command
-	known_distribution="(Debian|Ubuntu|RedHat|CentOS|openSUSE|Amazon)"
+	known_distribution="(Debian|Ubuntu|RedHat|CentOS|openSUSE|SUSE|Amazon)"
 	distribution=$(lsb_release -d 2>/dev/null | grep -Eo $known_distribution  || grep -Eo $known_distribution /etc/issue 2>/dev/null || uname -s)
 	if [ $distribution = "Darwin" ]; then
 			OS="Darwin"
@@ -55,7 +55,7 @@ function get_os() {
 			OS="Debian"
 	elif [ -f /etc/debian_version -o "$distribution" == "Ubuntu" ]; then
 			OS="Ubuntu"
-    elif [ -f /etc/redhat-release -o "$distribution" == "RedHat" -o "$distribution" == "CentOS" -o "$distribution" == "openSUSE" -o "$distribution" == "Amazon" ]; then
+    elif [ -f /etc/redhat-release -o "$distribution" == "RedHat" -o "$distribution" == "CentOS" -o "$distribution" == "openSUSE" -o "$distribution" == "SUSE" -o "$distribution" == "Amazon" ]; then
 			OS="RedHat"
 	# Some newer distros like Amazon may not have a redhat-release file
 	elif [ -f /etc/system-release -o "$distribution" == "Amazon" ]; then
@@ -248,8 +248,9 @@ if [ "$1" == "-update" ]; then
     yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/agent/run ${agent_install_folder}/agent/
 #    yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat/filebeat.yml ${agent_install_folder}/filebeat
     yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat/user.conf ${agent_install_folder}/filebeat
-    yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat/filebeat.startup.sh ${agent_install_folder}/filebeat
-    yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/altenv/etc/supervisord.conf ${agent_install_folder}/altenv/etc/
+    if [ "$?" != "0" ];then
+       yes | cp -f  ${working_folder}/cloudwiz-agent-bk-${current_time}/filebeat-5.4.2-linux-x86_64/user.conf ${agent_install_folder}/filebeat
+    fi
 fi
 # chown -hR "$agent_user" "${agent_install_folder}"
 # abort_if_failed "failed to change ownership of ${agent_install_folder}/download to $agent_user"

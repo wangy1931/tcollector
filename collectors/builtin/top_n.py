@@ -16,7 +16,7 @@
 
 import time
 from subprocess import Popen, PIPE, CalledProcessError, STDOUT
-
+import psutil
 from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
 
@@ -42,9 +42,10 @@ class TopN(CollectorBase):
             for line in p.stdout.readlines():
                 self.process(line, metric)
 
-            retval = p.wait()
-            if retval:
-                raise CalledProcessError(ret, "ps -Ao comm,pid,%s,cmd --sort=-%s | head -n %s"%(ps_field, ps_sort_by,self.N), "ps returned code %i" % retval)
+            out, err = p.communicate()
+            if err:
+                raise CalledProcessError(err, "ps -Ao comm,pid,%s,cmd --sort=-%s | head -n %s" % (
+                ps_field, ps_sort_by, self.N), "ps returned %i" % out)
         except OSError as e1:
             self.log_exception("ps -Ao comm,pid,%s,cmd --sort=-%s | head -n %s. [%s]"%(ps_field, ps_sort_by,self.N, e1))
             return
@@ -59,8 +60,14 @@ class TopN(CollectorBase):
             #cmd = utils.remove_invalid_characters(tokens[0])
             pid = tokens[1]
             #print cmd, pid, tokens[2]
-            value = float(tokens[2]) # cpu or mem
-            full_command = ''.join(tokens[3:len(tokens)]) # full command
+             # cpu or mem
+
+            if 'cpu' in metric:
+                cpu_count=psutil.cpu_count()
+                value = float(tokens[2])/cpu_count
+            else:
+                value = float(tokens[2])
+            full_command = ''.join(tokens[3:len(tokens)])  # full command
             tag = "pid_cmd=%s_%s"%(pid,utils.remove_invalid_characters(full_command))
             self.print_metric(metric, (int(time.time())), value, tag)
 

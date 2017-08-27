@@ -19,11 +19,9 @@ except ImportError:
     json = None
 
 from Queue import Queue
-from collectors.lib import utils
-from collectors.lib.hadoop_http import HadoopHttp
-from collectors.lib.hadoop_http import HadoopNode
-from collectors.lib.collectorbase import CollectorBase
 
+from collectors.lib.hadoop_http import HadoopCollectorBase
+from collectors.lib.hadoop_http import HadoopNode
 
 REPLACEMENTS = {
     "datanodeactivity-": ["activity"],
@@ -33,24 +31,18 @@ REPLACEMENTS = {
 }
 
 
-class HadoopDataNode(CollectorBase):
+class HadoopDataNode(HadoopCollectorBase):
     def __init__(self, config, logger, readq):
-        super(HadoopDataNode, self).__init__(config, logger, readq)
-
+        super(HadoopDataNode, self).__init__(config, logger, readq, REPLACEMENTS, HadoopNode)
         self.service = self.get_config('service', 'hadoop')
         self.daemon = self.get_config('daemon', 'datanode')
         self.host = self.get_config('host', 'localhost')
         self.port = self.get_config('port', 50075)
-        self.readq = readq
+
 
     def __call__(self):
-        with utils.lower_privileges(self._logger):
-            if json:
-                self._readq.nput("hadoop.datanode.state %s %s" % (int(time.time()), '0'))
-                HadoopNode(self.service, self.daemon, self.host, self.port, REPLACEMENTS, self.readq, self._logger).emit()
-            else:
-                self._readq.nput("hadoop.datanode.state %s %s" % (int(time.time()), '1'))
-                self.logger.error("This collector requires the `json' Python module.")
+        self.call("hadoop.datanode.state")
+
 
 
 if __name__ == "__main__":
