@@ -3,7 +3,7 @@
 # Licensed under Simplified BSD License (see LICENSE)
 
 # project
-from checks import Check
+from collectors.lib.checks import Check
 
 # 3rd party
 import uptime
