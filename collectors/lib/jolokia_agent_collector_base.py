@@ -34,13 +34,13 @@ class JolokiaAgentCollectorBase(JolokiaCollector):
             if pid is None and puser is None:
                 raise Exception("failed to find %s process, One of the (pid, puser) pair is None (%s, %s)" % (self.process_name, str(pid), str(puser)))
             if self.process_pid != pid:
-                self.log_info("found %s pid %d, puser %s", self.process_name, pid, puser)
+                self.log_info("found %s pid %s, puser %s", self.process_name, pid, puser)
                 if self.jolokia_process is not None:
-                    self.log_info("stop jolokia agent bound to old %s pid %d", self.process_name, self.process_pid)
+                    self.log_info("stop jolokia agent bound to old %s pid %s", self.process_name, self.process_pid)
                     self.stop_subprocess(self.jolokia_process, "jolokia JVM Agent")
                 self.process_pid = pid
-                self.log_info("joloia agent binds to %d", pid)
-                cmdstr = "su -c \"java -jar %s --port %s start %d\" %s" % (self.jolokia_file_path, self.port, pid, puser)
+                self.log_info("joloia agent binds to %s", pid)
+                cmdstr = "su -c \"java -jar %s --port %s start %s\" %s" % (self.jolokia_file_path, self.port, pid, puser)
                 # cmdstr = "java -jar %s --port %s start %d" % (self.jolokia_file_path, self.port, pid)
                 self.log_info("start jolokia agent %s", cmdstr)
                 self.jolokia_process = subprocess.Popen(cmdstr, stdout=subprocess.PIPE, shell=True)
@@ -49,7 +49,7 @@ class JolokiaAgentCollectorBase(JolokiaCollector):
 
     def cleanup(self):
         if self.jolokia_process is not None:
-            self.log_info('stop subprocess %d', self.jolokia_process.pid)
+            self.log_info('stop subprocess %s', self.jolokia_process.pid)
             self.stop_subprocess(self.jolokia_process, __name__)
 
     def process_name(self):
