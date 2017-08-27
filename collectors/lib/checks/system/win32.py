@@ -13,7 +13,7 @@ except ImportError:
     psutil = None
 
 try:
-    from checks.libs.wmi.sampler import WMISampler
+    from collectors.lib.checks.libs.wmi.sampler import WMISampler
 except Exception:
     def WMISampler(*args, **kwargs):
         """
