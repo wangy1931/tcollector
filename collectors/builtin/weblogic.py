@@ -1,5 +1,6 @@
 import time
 import ast
+from collectors.lib import utils
 from collectors.lib.jolokia_agent_collector_base import JolokiaAgentCollectorBase
 from collectors.lib.jolokia import JolokiaParserBase
 from collectors.lib.collectorbase import CollectorBase
@@ -183,17 +184,17 @@ class WeblogicJDBCDataSourceRuntime(JolokiaParserBase):
 class WeblogicEJBPoolRuntime(JolokiaParserBase):
     def __init__(self, logger, server_name):
         super(WeblogicEJBPoolRuntime, self).__init__(logger)
-        self.metrics = [
-            "NumAvailable",
-            "CurrCapacity",
-            "ConnectionsTotalCount",
-            "ActiveConnectionsCurrentCount",
-            "LeakedConnectionCount",
-            "PrepStmtCacheCurrentSize",
-            "WaitingForConnectionCurrentCount",
-            "WaitingForConnectionTotal",
-            "WaitingForConnectionSuccessTotal",
-            "WaitingForConnectionFailureTotal"
+        self.metrics =[
+            "AccessTotalCount - MissTotalCount",
+            "MissTotalCount",
+            "WaiterCurrentCount",
+            "DestroyedTotalCount",
+            "BeansInUseCurrentCount",
+            "PooledBeansCurrentCount",
+            "TransactionsCommittedTotalCount +TransactionsRolledBackTotalCount +TransactionsTimedOutTotalCount",
+            "TransactionsCommittedTotalCount",
+            "TransactionsRolledBackTotalCount",
+            "TransactionsTimedOutTotalCount",
         ]
         self.additional_tags = "server=%s" % server_name
 
@@ -201,7 +202,7 @@ class WeblogicEJBPoolRuntime(JolokiaParserBase):
         return self.metrics
 
     def metric_name(self, name):
-        return "%s.%s" % ("weblogic.ejb", name)
+        return "%s.%s" % ("weblogic.ejb", utils.remove_invalid_characters(name))
 
 
 class JolokiaGCParser(JolokiaParserBase):
