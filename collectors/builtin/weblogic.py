@@ -30,7 +30,7 @@ class WeblogicWarper(JolokiaAgentCollectorBase):
     {
       "type": "read",
       "mbean": "java.lang:type=Threading",
-      "attribute": ["ThreadCount","TotalStartedThreadCount","StandbyThreadCount"]
+      "attribute": ["ThreadCount","TotalStartedThreadCount"]
     },
     {
       "type": "read",
@@ -78,6 +78,15 @@ class WeblogicWarper(JolokiaAgentCollectorBase):
             "TransactionsRolledBackTotalCount",
             "TransactionsTimedOutTotalCount",
         ]
+    },
+    {
+      "type": "read",
+      "mbean": "java.lang:name=PS Scavenge,type=GarbageCollector",
+      "attribute": [
+        "LastGcInfo",
+        "CollectionCount",
+        "CollectionTime"
+      ]
     }
     ]'''
 
@@ -88,6 +97,7 @@ class WeblogicWarper(JolokiaAgentCollectorBase):
             "java.lang:type=Threading": WeblogicThreadStatus(logger, server_name),
             "java.lang:type=ClassLoading": WeblogicClassLoader(logger, server_name),
             "com.bea:ServerRuntime=*,Name=ThreadPoolRuntime,Type=ThreadPoolRuntime": WeblogicThreadPoolRuntime(logger, server_name),
+            "java.lang:name=PS Scavenge,type=GarbageCollector": "JolokiaGCParser",
             "com.bea:ServerRuntime=*,Name=JTARuntime,Type=JTARuntime": WeblogicJTARuntime(logger, server_name),
             "com.bea:ServerRuntime=*,Name=*,Type=JDBCDataSourceRuntime": WeblogicJDBCDataSourceRuntime(logger, server_name),
             "com.bea:ServerRuntime=*,Name=*,ApplicationRuntime=*,Type=EJBPoolRuntime,EJBComponentRuntime=*,*": WeblogicEJBPoolRuntime(logger, server_name),
@@ -191,3 +201,44 @@ class WeblogicEJBPoolRuntime(JolokiaParserBase):
 
     def metric_name(self, name):
         return "%s.%s" % ("weblogic.ejb", name)
+
+
+class JolokiaGCParser(JolokiaParserBase):
+    def __init__(self, logger):
+        self.additional_tags = "server=%s" % server_name
+        super(JolokiaGCParser, self).__init__(logger)
+
+    def metric_dict(self, json_dict):
+        metrics_dict = {}
+
+        survivorspace_dict = json_dict["value"]["LastGcInfo"]["memoryUsageAfterGc"]["PS Survivor Space"]
+        metrics_dict.update({"survivorspace." + key: survivorspace_dict[key] for key in survivorspace_dict.keys()})
+
+        edenspace_dict = json_dict["value"]["LastGcInfo"]["memoryUsageAfterGc"]["PS Eden Space"]
+        metrics_dict.update({"edenspace." + key: edenspace_dict[key] for key in edenspace_dict.keys()})
+
+        oldgen_dict = json_dict["value"]["LastGcInfo"]["memoryUsageAfterGc"]["PS Old Gen"]
+        metrics_dict.update({"oldgen." + key: oldgen_dict[key] for key in oldgen_dict.keys()})
+
+        codecache_dict = json_dict["value"]["LastGcInfo"]["memoryUsageAfterGc"]["Code Cache"]
+        metrics_dict.update({"codecache." + key: codecache_dict[key] for key in codecache_dict.keys()})
+
+        permgen_dict = json_dict["value"]["LastGcInfo"]["memoryUsageAfterGc"]["PS Perm Gen"]
+        metrics_dict.update({"permgen." + key: permgen_dict[key] for key in permgen_dict.keys()})
+
+        metrics_dict.update({"GcThreadCount": json_dict["value"]["LastGcInfo"]["GcThreadCount"]})
+        metrics_dict.update({"CollectionCount": json_dict["value"]["CollectionCount"]})
+        metrics_dict.update({"CollectionTime": json_dict["value"]["CollectionTime"]})
+
+        return metrics_dict
+
+    def valid_metrics(self):
+        return ["GcThreadCount", "CollectionCount", "CollectionTime",
+                "survivorspace.max", "survivorspace.committed", "survivorspace.init", "survivorspace.used",
+                "edenspace.max", "edenspace.committed", "edenspace.init", "edenspace.used",
+                "oldgen.max", "oldgen.committed", "oldgen.init", "oldgen.used",
+                "codecache.max", "codecache.committed", "codecache.init", "codecache.used",
+                "permgen.max", "permgen.committed", "permgen.init", "permgen.used"]
+
+    def metric_name(self, name):
+        return "%s.%s" % ("weblogic.scavenge.gc", name)
