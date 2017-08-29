@@ -181,7 +181,7 @@ def get_hostname(logger):
 
 def load_runner_conf():
     runner_config_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../..', 'runner.conf'))
-    runner_config = ConfigParser.SafeConfigParser({"alertd_server_and_port": 'localhost:5001'})
+    runner_config = ConfigParser.SafeConfigParser({"alertd_server_and_port": 'http://localhost:5001'})
     runner_config.read(runner_config_path)
     return runner_config
 

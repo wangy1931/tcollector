@@ -1,9 +1,10 @@
 import psutil
-import socket
 import time
 
 from collectors.lib import utils
 from collectors.lib.collectorbase import CollectorBase
+from collectors.lib.utils import TestQueue, TestLogger
+
 
 class ServiceScan(CollectorBase):
     def __init__(self, config, logger, readq):
@@ -32,3 +33,8 @@ class ServiceScan(CollectorBase):
         except Exception as e:
             self.log_error("can't send scan result to alertd %s" % e)
             self._readq.nput("scan.state %s %s" % (int(time.time()), '1'))
+
+
+if __name__ == "__main__":
+    s = ServiceScan(None, TestLogger(), TestQueue())
+    s.__call__()

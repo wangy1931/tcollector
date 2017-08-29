@@ -80,7 +80,7 @@ class HostParser:
         self.systemVendor = hardware.get('system_vendor')
 
         self.architecture = platform.get('architecture')
-        self.hostname = platform.get('hostname')
+        self.hostname = platform.get('nodename')
         self.fqdn = platform.get('fqdn')
         self.domain = platform.get('domain')
 
