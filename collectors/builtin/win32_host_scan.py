@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import copy
 import subprocess
 import sys
 import time
@@ -29,6 +28,22 @@ class Win32HostScan(CollectorBase):
             self._readq.nput('scan.state %s %s' % (int(time.time()), '1'))
         finally:
             pythoncom.CoUninitialize()
+
+    @staticmethod
+    def get_hostname_and_ip(logger):
+        try:
+            pythoncom.CoInitialize()
+            c = wmi.WMI()
+            host = HostParser(logger)
+            host.collect_default_ip()
+            host.collect_computer_system(c)
+
+            return str(host.hostname), host.defaultIp
+        except Exception as e:
+            logger.log_error('cannot get host ip and hostname: %s' % e)
+        finally:
+            pythoncom.CoUninitialize()
+
 
 class HostParser:
     def __init__(self, logger):
@@ -224,5 +239,5 @@ class HostParser:
 
 
 if __name__ == "__main__":
-    memstats3_inst = Win32HostScan(None, None, TestQueue())
-    memstats3_inst.__call__()
+    test = Win32HostScan(None, None, TestQueue())
+    test.__call__()
