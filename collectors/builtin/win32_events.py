@@ -2,8 +2,8 @@
 import codecs
 import os
 import time
-
 from datetime import datetime, timedelta
+
 import pythoncom
 import wmi
 
@@ -11,7 +11,9 @@ from collectors.lib.collectorbase import CollectorBase
 from collectors.lib.utils import TestQueue
 
 record_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../event_last_query.conf')
-log_file_path = 'c:\\opt\\cloudwiz-agent\\altenv\\var\\log\\events.log'
+log_file_path = 'c:\\opt\\cloudwiz-agent\\altenv\\var\\log'
+log_file_name = 'events-{0}.log'
+date_format = '%Y_%m_%d'
 
 
 class Win32Events(CollectorBase):
@@ -20,6 +22,9 @@ class Win32Events(CollectorBase):
 
     def __call__(self):
         try:
+            today = datetime.today()
+            self.delete_old_logs(today)
+
             pythoncom.CoInitialize()
 
             last_query = self.get_last_query()
@@ -31,12 +36,14 @@ class Win32Events(CollectorBase):
                 d = datetime.now()
                 t = timedelta(days=15)
                 start_time = d - t
-                wmi_time = wmi.from_time(start_time.year, start_time.month, start_time.day, start_time.hour, start_time.minute, start_time.second, 0, 0)
+                wmi_time = wmi.from_time(start_time.year, start_time.month, start_time.day, start_time.hour,
+                                         start_time.minute, start_time.second, 0, 0)
                 wql += "AND TimeGenerated > '" + wmi_time + "'"
 
             timestamp = 0
             time_t = None
-            with codecs.open(log_file_path, 'a', 'utf-8') as f:
+            with codecs.open(os.path.join(log_file_path, log_file_name.format(today.strftime(date_format))), 'a',
+                             'utf-8') as f:
                 for ev in c.query(wql):
                     time_gen = self.fix_date(ev.TimeGenerated)
                     # rewrite to log file
@@ -60,7 +67,7 @@ class Win32Events(CollectorBase):
 
             self._readq.nput('scan.state %s %s' % (int(time.time()), '0'))
         except Exception as e:
-            self.log_error('cannot send host scan result to alertd %s' % e)
+            self.log_error('cannot send events: %s' % e)
             self._readq.nput('scan.state %s %s' % (int(time.time()), '1'))
         finally:
             pythoncom.CoUninitialize()
@@ -80,7 +87,7 @@ class Win32Events(CollectorBase):
         return time_tuple
 
     def get_last_query(self):
-        with open(record_file_path, 'w+') as f:
+        with open(record_file_path, 'a+') as f:
             dt = f.readline()
         return dt
 
@@ -89,6 +96,18 @@ class Win32Events(CollectorBase):
         with open(record_file_path, 'w') as f:
             f.write(time_t)
 
+    # log files are kept 48h
+    def delete_old_logs(self, today):
+        yesterday = today - timedelta(days=1)
+        try:
+            for f in os.listdir(log_file_path):
+                if f != log_file_name.format(today.strftime(date_format)) and f != log_file_name.format(
+                        yesterday.strftime(date_format)):
+                    os.remove(os.path.join(log_file_path, f))
+        except Exception as e:
+            self.log_error('cannot delete old logs %s' % e)
+
+
 if __name__ == "__main__":
-    memstats3_inst = Win32Events(None, None, TestQueue())
-    memstats3_inst.__call__()
+    test = Win32Events(None, None, TestQueue())
+    test.__call__()
