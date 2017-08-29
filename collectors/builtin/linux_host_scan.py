@@ -63,10 +63,11 @@ class HostParser:
 
     def get_ipv4(self, network):
         default_v4 = network.get('default_ipv4')
-        if default_v4 is not None:
+        if default_v4.get('address') is not None:
             ipv4 = default_v4.get('address')
         else:
-            ipv4 = None
+            import socket
+            ipv4 = socket.gethostbyname(socket.gethostname())
         return ipv4
 
     def parse(self, hardware, platform, network, virtual, distribution):

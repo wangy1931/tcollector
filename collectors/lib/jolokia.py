@@ -18,7 +18,7 @@ class JolokiaParserBase(object):
             raise IOError("status code %d" % status)
         ts = json_dict["timestamp"]
         value_dict = self.metric_dict(json_dict)
-        self._process(readq, port, ts, value_dict)
+        self._process(readq, port, ts, value_dict, self.additional_tags)
 
     def metric_dict(self, json_dict):
         return json_dict["value"]
