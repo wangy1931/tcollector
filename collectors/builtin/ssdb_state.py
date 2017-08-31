@@ -11,7 +11,8 @@ class SsdbState(CollectorBase):
         super(SsdbState, self).__init__(config, logger, readq)
         self.single_metrics=["links", "total_calls", "dbsize"]
         self.mul_metrics=["binlogs"]
-
+        self.host = self.get_config("host","localhost")
+        self.port = self.get_config("port",8888)
     def __call__(self):
         self.timestamp=int(time.time())
 
@@ -61,8 +62,8 @@ class SsdbState(CollectorBase):
         self._readq.nput("ssdb.{0}.time_wait {1} {2}".format(cmd, self.timestamp, nums[1]))
         self._readq.nput("ssdb.{0}.time_proc {1} {2}".format(cmd, self.timestamp, nums[2]))
 
-    def get_config(self):
-        return ssdb.Client()
+    def get_connect(self):
+        return ssdb.Client(self.host,int(self.port))
 
     def colse_ssdb(self):
         self.conn.close()
