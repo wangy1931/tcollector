@@ -1,31 +1,10 @@
 #!/usr/bin/python
-# This file is part of tcollector.
-# Copyright (C) 2010-2013  The tcollector Authors.
-#
-# This program is free software: you can redistribute it and/or modify it
-# under the terms of the GNU Lesser General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or (at your
-# option) any later version.  This program is distributed in the hope that it
-# will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-# of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
-# General Public License for more details.  You should have received a copy
-# of the GNU Lesser General Public License along with this program.  If not,
-# see <http://www.gnu.org/licenses/>.
-#
-"""Nginx stats for TSDB"""
 
 import time
 import json
 import urllib2
 from collectors.lib.collectorbase import CollectorBase
 
-
-# There are two ways to collect Nginx's stats.
-# 1. [yi-ThinkPad-T430 scripts (master)]$ curl http://localhost:8080/nginx_status
-# Active connections: 2 
-# server accepts handled requests
-#  4 4 11 
-# Reading: 0 Writing: 1 Waiting: 1
 
 class Elasticsearchstat(CollectorBase):
 
@@ -82,7 +61,7 @@ class Elasticsearchstat(CollectorBase):
         cluster = parsed['cluster_name'].lower()
         for node in parsed['nodes']:
             # collecting metrics
-            name = parsed['nodes'][node]['name'].lower()
+            name = "_".join(parsed['nodes'][node]['name'].lower().split())
             indices = parsed['nodes'][node]['indices']
 
             docs_count = indices['docs']['count']
@@ -160,108 +139,108 @@ class Elasticsearchstat(CollectorBase):
             search_rejected = thread['search']['rejected']
 
             # print metrics to stdout
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.docs_count {1} {2}  tags="node={3}"'.format(cluster, ts, docs_count,
+            self._readq.nput( 'elasticsearch.nodes.indices.docs_count {1} {2}  node={3} cluster={0}'.format(cluster, ts, docs_count,
                                                                                                 name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.bytes_count {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.indices.bytes_count {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                  bytes_count,
                                                                                                  name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.throttle_ms {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.indices.throttle_ms {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                  throttle_ms,
                                                                                                  name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.index_total {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.indices.index_total {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                  index_total,
                                                                                                  name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.index_avg {1} {2}  tags="node={3}"'.format(cluster, ts, index_avg,
+            self._readq.nput( 'elasticsearch.nodes.indices.index_avg {1} {2}  node={3} cluster={0}'.format(cluster, ts, index_avg,
                                                                                                name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.index_current {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.indices.index_current {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                    index_current,
                                                                                                    name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.index_failed {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.indices.index_failed {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                   index_failed,
                                                                                                   name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.query_current {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.indices.query_current {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                    query_current,
                                                                                                    name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.query_total {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.indices.query_total {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                  query_total,
                                                                                                  name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.query_avg {1} {2}  tags="node={3}"'.format(cluster, ts, query_avg,
+            self._readq.nput( 'elasticsearch.nodes.indices.query_avg {1} {2}  node={3} cluster={0}'.format(cluster, ts, query_avg,
                                                                                                name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.fetch_current {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.indices.fetch_current {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                    fetch_current,
                                                                                                    name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.fetch_total {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.indices.fetch_total {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                  fetch_total,
                                                                                                  name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.fetch_avg {1} {2}  tags="node={3}"'.format(cluster, ts, fetch_avg,
+            self._readq.nput( 'elasticsearch.nodes.indices.fetch_avg {1} {2}  node={3} cluster={0}'.format(cluster, ts, fetch_avg,
                                                                                                name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.fielddata_size {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.indices.fielddata_size {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                     fielddata_size,
                                                                                                     name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.fielddata_evictions {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.indices.fielddata_evictions {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                          fielddata_evictions,
                                                                                                          name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.query_cache_bytes {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.indices.query_cache_bytes {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                        query_cache_bytes,
                                                                                                        name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.indices.query_evictions {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.indices.query_evictions {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                      query_evictions,
                                                                                                      name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.jvm.young_count {1} {2}  tags="node={3}"'.format(cluster, ts, young_count,
+            self._readq.nput( 'elasticsearch.nodes.jvm.young_count {1} {2}  node={3} cluster={0}'.format(cluster, ts, young_count,
                                                                                              name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.jvm.young_avg {1} {2}  tags="node={3}"'.format(cluster, ts, young_avg,
+            self._readq.nput( 'elasticsearch.nodes.jvm.young_avg {1} {2}  node={3} cluster={0}'.format(cluster, ts, young_avg,
                                                                                            name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.jvm.old_count {1} {2}  tags="node={3}"'.format(cluster, ts, old_count,
+            self._readq.nput( 'elasticsearch.nodes.jvm.old_count {1} {2}  node={3} cluster={0}'.format(cluster, ts, old_count,
                                                                                            name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.jvm.old_avg {1} {2}  tags="node={3}"'.format(cluster, ts, old_avg,
+            self._readq.nput( 'elasticsearch.nodes.jvm.old_avg {1} {2}  node={3} cluster={0}'.format(cluster, ts, old_avg,
                                                                                          name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.jvm.heap_used_pct {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.jvm.heap_used_pct {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                heap_used_pct,
                                                                                                name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.jvm.heap_committed {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.jvm.heap_committed {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                 heap_committed,
                                                                                                 name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.os.cpu_pct {1} {2}  tags="node={3}"'.format(cluster, ts, cpu_pct,
+            self._readq.nput( 'elasticsearch.nodes.os.cpu_pct {1} {2}  node={3} cluster={0}'.format(cluster, ts, cpu_pct,
                                                                                         name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.os.cpu_load {1} {2}  tags="node={3}"'.format(cluster, ts, cpu_load,
+            self._readq.nput( 'elasticsearch.nodes.os.cpu_load {1} {2}  node={3} cluster={0}'.format(cluster, ts, cpu_load,
                                                                                          name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.os.mem_swap_used {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.os.mem_swap_used {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                               mem_swap_used,
                                                                                               name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.http.current_open {1} {2}  tags="node={3}"'.format(cluster, ts, http_open,
+            self._readq.nput( 'elasticsearch.nodes.http.current_open {1} {2}  node={3} cluster={0}'.format(cluster, ts, http_open,
                                                                                                name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.thread.bulk_queue {1} {2}  tags="node={3}"'.format(cluster, ts, bulk_queue,
+            self._readq.nput( 'elasticsearch.nodes.thread.bulk_queue {1} {2}  node={3} cluster={0}'.format(cluster, ts, bulk_queue,
                                                                                                name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.thread.bulk_rejected {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.thread.bulk_rejected {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                   bulk_rejected,
                                                                                                   name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.thread.flush_queue {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.thread.flush_queue {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                 flush_queue,
                                                                                                 name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.thread.flush_rejected {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.thread.flush_rejected {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                    flush_rejected,
                                                                                                    name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.thread.index_queue {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.thread.index_queue {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                 index_queue,
                                                                                                 name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.thread.index_rejected {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.thread.index_rejected {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                    index_rejected,
                                                                                                    name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.thread.listener_queue {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.thread.listener_queue {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                    listener_queue,
                                                                                                    name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.thread.listener_rejected {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.thread.listener_rejected {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                       listener_rejected,
                                                                                                       name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.thread.mgmt_queue {1} {2}  tags="node={3}"'.format(cluster, ts, mgmt_queue,
+            self._readq.nput( 'elasticsearch.nodes.thread.mgmt_queue {1} {2}  node={3} cluster={0}'.format(cluster, ts, mgmt_queue,
                                                                                                name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.thread.mgmt_rejected {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.thread.mgmt_rejected {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                   mgmt_rejected,
                                                                                                   name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.thread.search_queue {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.thread.search_queue {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                  search_queue,
                                                                                                  name))
-            self._readq.nput( 'elasticsearch.{0}.nodes.thread.search_rejected {1} {2}  tags="node={3}"'.format(cluster, ts,
+            self._readq.nput( 'elasticsearch.nodes.thread.search_rejected {1} {2}  node={3} cluster={0}'.format(cluster, ts,
                                                                                                     search_rejected,
                                                                                                     name))
 
