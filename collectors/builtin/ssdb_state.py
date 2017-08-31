@@ -5,10 +5,10 @@ from collectors.lib.collectorbase import CollectorBase
 
 
 
-class Ssdb(CollectorBase):
+class SsdbState(CollectorBase):
 
     def __init__(self, config, logger, readq):
-        super(Ssdb, self).__init__(config, logger, readq)
+        super(SsdbState, self).__init__(config, logger, readq)
         self.single_metrics=["links", "total_calls", "dbsize"]
         self.mul_metrics=["binlogs"]
 
