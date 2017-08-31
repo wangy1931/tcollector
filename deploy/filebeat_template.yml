@@ -37,9 +37,9 @@ filebeat.prospectors:
 
   # Paths that should be crawled and fetched. Glob based paths.
   paths:
-    - <basedir>/altenv/var/log/filbeat.log
+    - <basedir>/altenv/var/log/filebeat.log
 
-  document_type: filbeat
+  document_type: filebeat
   fields.client: <orgid>
   fields.orgid: 2
   fields.sysid: 15
