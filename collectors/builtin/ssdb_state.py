@@ -58,9 +58,10 @@ class SsdbState(CollectorBase):
                 cmd_str_list.append(cmd)
 
     def send_cmd_data(self,cmd, nums):
-        self._readq.nput("ssdb.{0}.calls {1} {2}".format(cmd, self.timestamp, nums[0]))
-        self._readq.nput("ssdb.{0}.time_wait {1} {2}".format(cmd, self.timestamp, nums[1]))
-        self._readq.nput("ssdb.{0}.time_proc {1} {2}".format(cmd, self.timestamp, nums[2]))
+        cmd_small=cmd.replace("cmd.","")
+        self._readq.nput("ssdb.cmd.calls {1} {2} cmd={0}".format(cmd_small, self.timestamp, nums[0]))
+        self._readq.nput("ssdb.cmd.time_wait {1} {2} cmd={0}".format(cmd_small, self.timestamp, nums[1]))
+        self._readq.nput("ssdb.cmd.time_proc {1} {2} cmd={0}".format(cmd_small, self.timestamp, nums[2]))
 
     def get_connect(self):
         return ssdb.Client(self.host,int(self.port))
