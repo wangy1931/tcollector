@@ -33,6 +33,7 @@ class Elasticsearchstat(CollectorBase):
             list = line.split(" ")
             if len(list)>=14:
                 timestamp = list[0]
+                cluster=list[2]
                 status = self.es_status_dict[list[3]]
                 total = list[4]
                 data = list[5]
@@ -42,15 +43,15 @@ class Elasticsearchstat(CollectorBase):
                 shards_initializing = list[9]
                 shards_unassigned = list[10]
                 shards_active = list[13].replace("%", "")
-                self._readq.nput("elasticsearch.elasticsearch.status %s %s " % (timestamp, status))
-                self._readq.nput("elasticsearch.elasticsearch.node.total %s %s" % (timestamp, total))
-                self._readq.nput("elasticsearch.elasticsearch.node.data %s %s" % (timestamp, data))
-                self._readq.nput("elasticsearch.elasticsearch.shards.total %s %s" % (timestamp, shards_total))
-                self._readq.nput("elasticsearch.elasticsearch.shards.primary %s %s" % (timestamp, shards_primary))
-                self._readq.nput("elasticsearch.elasticsearch.shards.relocating %s %s" % (timestamp, shards_relocating))
-                self._readq.nput("elasticsearch.elasticsearch.shards.initializing %s %s" % (timestamp, shards_initializing))
-                self._readq.nput("elasticsearch.elasticsearch.shards.unassigned %s %s" % (timestamp, shards_unassigned))
-                self._readq.nput("elasticsearch.elasticsearch.shards.active %s %s" % (timestamp, shards_active))
+                self._readq.nput("elasticsearch.status %s %s cluster=%s" % (timestamp, status,cluster))
+                self._readq.nput("elasticsearch.node.total %s %s cluster=%s" % (timestamp, total,cluster))
+                self._readq.nput("elasticsearch.node.data %s %s cluster=%s" % (timestamp, data,cluster))
+                self._readq.nput("elasticsearch.shards.total %s %s cluster=%s" % (timestamp, shards_total,cluster))
+                self._readq.nput("elasticsearch.shards.primary %s %s cluster=%s" % (timestamp, shards_primary,cluster))
+                self._readq.nput("elasticsearch.shards.relocating %s %s cluster=%s" % (timestamp, shards_relocating,cluster))
+                self._readq.nput("elasticsearch.shards.initializing %s %s cluster=%s" % (timestamp, shards_initializing,cluster))
+                self._readq.nput("elasticsearch.shards.unassigned %s %s cluster=%s" % (timestamp, shards_unassigned,cluster))
+                self._readq.nput("elasticsearch.shards.active %s %s cluster=%s" % (timestamp, shards_active,cluster))
             else:
                 self.log_warn("get es health fail!!")
 
