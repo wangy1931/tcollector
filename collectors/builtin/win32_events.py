@@ -101,7 +101,7 @@ class Win32Events(CollectorBase):
         yesterday = today - timedelta(days=1)
         try:
             for f in os.listdir(log_file_path):
-                if f != log_file_name.format(today.strftime(date_format)) and f != log_file_name.format(
+                if f.startswith('events') and f != log_file_name.format(today.strftime(date_format)) and f != log_file_name.format(
                         yesterday.strftime(date_format)):
                     os.remove(os.path.join(log_file_path, f))
         except Exception as e:
