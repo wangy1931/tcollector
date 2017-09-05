@@ -64,7 +64,12 @@ class Procstats(CollectorBase):
             self.f_scaling_min = dict([])
             self.f_scaling_max = dict([])
             self.f_scaling_cur = dict([])
-            self.f_softirqs = open("/proc/softirqs", "r")
+            try:
+                self.f_softirqs = open("/proc/softirqs", "r")
+            except:
+                self.log_warn("unable to process /proc/softirqs")
+                self.f_softirqs = None
+                
             for cpu in glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_cur_freq"):
                 m = re.match("/sys/devices/system/cpu/cpu([0-9]*)/cpufreq/scaling_cur_freq", cpu)
                 if not m:
@@ -89,7 +94,8 @@ class Procstats(CollectorBase):
         self.safe_close(self.f_loadavg)
         self.safe_close(self.f_entropy_avail)
         self.safe_close(self.f_interrupts)
-        self.safe_close(self.f_softirqs)
+        if self.f_softirqs is not None:
+            self.safe_close(self.f_softirqs)
         self._cleanup_dict(self.f_scaling_min)
         self._cleanup_dict(self.f_scaling_max)
         self._cleanup_dict(self.f_scaling_cur)
@@ -218,25 +224,24 @@ class Procstats(CollectorBase):
                             self.log_error("Unexpected interrupts value %r in %r: ", val, cols)
                             break
                         self._readq.nput("proc.interrupts %s %s type=%s cpu=%s" % (ts, val, irq_type, i))
-
-            self.f_softirqs.seek(0)
-            ts = int(time.time())
-            # Get number of CPUs from description line.
-            num_cpus = len(self.f_softirqs.readline().split())
-            for line in self.f_softirqs:
-                cols = line.split()
-
-                irq_type = cols[0].rstrip(":")
-                for i, val in enumerate(cols[1:]):
-                    if i >= num_cpus:
-                        # All values read, remaining cols contain textual
-                        # description
-                        break
-                    if not val.isdigit():
-                        # something is weird, there should only be digit values
-                        self.log_error("Unexpected softirq value %r in %r: ", val, cols)
-                        break
-                    self._readq.nput("proc.softirqs %s %s type=%s cpu=%s" % (ts, val, irq_type, i))
+            if self.f_softirqs is not None:
+            	self.f_softirqs.seek(0)
+            	ts = int(time.time())
+            	# Get number of CPUs from description line.
+            	num_cpus = len(self.f_softirqs.readline().split())
+            	for line in self.f_softirqs:
+                    cols = line.split()
+                    irq_type = cols[0].rstrip(":")
+                    for i, val in enumerate(cols[1:]):
+                    	if i >= num_cpus:
+                            # All values read, remaining cols contain textual
+                            # description
+                            break
+                    	if not val.isdigit():
+                            # something is weird, there should only be digit values
+                            self.log_error("Unexpected softirq value %r in %r: ", val, cols)
+                            break
+                    	self._readq.nput("proc.softirqs %s %s type=%s cpu=%s" % (ts, val, irq_type, i))
 
             self._print_numa_stats(self.numastats)
 
