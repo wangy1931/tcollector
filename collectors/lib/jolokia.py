@@ -10,6 +10,7 @@ from collectorbase import MetricType
 class JolokiaParserBase(object):
     def __init__(self, logger):
         self.logger = logger
+        self.additional_tags = None
         self._inc_processors = {}
 
     def parse(self, json_dict, readq, port):
@@ -18,7 +19,7 @@ class JolokiaParserBase(object):
             raise IOError("status code %d" % status)
         ts = json_dict["timestamp"]
         value_dict = self.metric_dict(json_dict)
-        self._process(readq, port, ts, value_dict)
+        self._process(readq, port, ts, value_dict, self.additional_tags)
 
     def metric_dict(self, json_dict):
         return json_dict["value"]

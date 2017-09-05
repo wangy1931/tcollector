@@ -1,0 +1,47 @@
+- name: setup agent for windows
+  hosts: all
+  gather_facts: no
+
+  tasks:
+    # create a directory if it doesn't exist
+    - name: create temp folder
+      win_file:
+        path: C:\tmp
+        state: directory
+
+    # copy files
+    - name: copy windows_deploy_agent.ps1
+      win_copy:
+        src: Windows/windows_deploy_agent.ps1
+        dest: c:\tmp\windows_deploy_agent.ps1
+
+    - name: copy cloudwiz-agent-amd64.zip
+      win_copy:
+        src: Windows/cloudwiz-agent-amd64.zip
+        dest: c:\tmp\cloudwiz-agent-amd64.zip
+
+    - name: stop all services
+      win_shell: c:\opt\cloudwiz-agent\altenv\bin\supervisorctl.bat stop all
+      when: update is defined
+    
+    - name: delete collector service
+      win_shell: sc delete "cloudwiz-agent:collector"
+      when: update is defined
+
+    - name: delete filebeat service
+      win_shell: sc delete "cloudwiz-agent:filebeat"
+      when: update is defined
+
+    - name: Remove directory structure
+      win_file:
+        path: c:\opt\
+        state: absent
+      # when: update is defined
+
+    # run the setup script
+    - name: run setup script
+      win_shell: $ORG_TOKEN='{{ token }}'; $CLIENT_ID='{{ org_id }}'; $SYSTEM_ID='{{ sys_id }}'; $METRIC_SERVER_HOST='{{ metric }}'; $ALERTD_SERVER='{{ alertd }}'; $AGENT_URL='{{ agent_url }}'; C:\tmp\windows_deploy_agent.ps1
+   
+    # start agent
+    - name: start services
+      win_shell: c:\opt\cloudwiz-agent\altenv\bin\supervisorctl.bat start all

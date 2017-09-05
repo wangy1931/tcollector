@@ -778,9 +778,9 @@ class Sender(threading.Thread):
                 ctx = ssl.create_default_context()
                 ctx.check_hostname = False
                 ctx.verify_mode = ssl.CERT_NONE
-                response = urllib2.urlopen(req, payload, context=ctx)
+                response = urllib2.urlopen(req, payload, context=ctx, timeout=20)
             else:
-                response = urllib2.urlopen(req, payload)
+                response = urllib2.urlopen(req, payload, timeout=20)
             LOG.debug("Received response %s", response.getcode())
             # print "Got response code: %s" % response.getcode()
             # print "Content:"

@@ -87,7 +87,9 @@ class Cloudwiz(CollectorBase):
         proc = subprocess.Popen(['/usr/bin/pmap', '-x', str(pid)], stdout=subprocess.PIPE)
         while True:
             line = proc.stdout.readline()
-            if "Total" in line:
+            if line == "":
+                break
+            if "total" in line.lower():
                 if "kB" in line:
                     arr = line.split()
                     self._readq.nput("%s.memory.total %s %s" % (metric, ts_curr, arr[2]))
@@ -99,6 +101,8 @@ class Cloudwiz(CollectorBase):
                     self._readq.nput("%s.memory.rss %s %s" % (metric, ts_curr, arr[2]))
                     self._readq.nput("%s.memory.dirty %s %s" % (metric, ts_curr, arr[4]))
                 break
+
+
 
 
     def get_cpu_total(self):
