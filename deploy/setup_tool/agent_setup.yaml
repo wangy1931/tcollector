@@ -1,0 +1,42 @@
+- name: setup agent
+  hosts: all
+  gather_facts: no
+  become: yes
+  
+  tasks:
+    # create a directory if it doesn't exist
+    - name: create temp folder
+      file:
+        path: /tmp/publish/{{ os }}
+        state: directory
+
+    # copy files
+    - name: copy deploy_agent.sh
+      copy:  
+        src: "{{ os }}/deploy_agent.sh"
+        dest: /tmp/publish/{{ os }}/deploy_agent.sh
+        mode: 0755
+
+    - name: copy agent.tar.gz.md5
+      copy: 
+        src: "{{ os }}/agent.tar.gz.md5"
+        dest: /tmp/publish/{{ os }}/agent.tar.gz.md5
+
+    - name: copy agent.tar.gz
+      copy: 
+        src: "{{ os }}/agent.tar.gz"
+        dest: /tmp/publish/{{ os }}/agent.tar.gz
+
+    # run the setup script
+    - name: run setup script
+      shell: ORG_TOKEN={{ token }} CLIENT_ID={{ org_id }} SYSTEM_ID={{ sys_id }} METRIC_SERVER_HOST={{ metric }} ALERTD_SERVER={{ alertd }} /tmp/publish/{{ os }}/deploy_agent.sh
+      when: update is undefined
+
+    - name: run setup script with update
+      shell: ORG_TOKEN={{ token }} CLIENT_ID={{ org_id }} SYSTEM_ID={{ sys_id }} METRIC_SERVER_HOST={{ metric }} ALERTD_SERVER={{ alertd }} /tmp/publish/{{ os }}/deploy_agent.sh -update
+      when: update is defined
+
+    # start agent
+    - name: start agent
+      shell: /etc/init.d/cloudwiz-agent start
+

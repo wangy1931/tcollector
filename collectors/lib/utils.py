@@ -112,12 +112,12 @@ def remove_invalid_characters(str):
 
 
 def get_pid_and_user_by_pname(process_unique_string):
-    commond_line = "ps -ef | grep -e %s | awk '{print $1\",\"$2}'" % process_unique_string
+    commond_line = "ps -ef | grep -e '%s'" % process_unique_string
     pid_user_cmds = subprocess.check_output(commond_line, shell=True).split('\n')
 
     for pid_user_cmd in pid_user_cmds:
         if pid_user_cmd != '' and 'grep' not in pid_user_cmd:
-            pid_user_info_list = pid_user_cmd.split(",")
+            pid_user_info_list = pid_user_cmd.split(" ")
             return pid_user_info_list[1],pid_user_info_list[0]
 
     return None, None
@@ -166,22 +166,22 @@ def get_ip(logger):
 def get_ip_by_host(logger):
     try:
         return socket.gethostbyname(socket.gethostname())
-    except:
-        logger.error("can't get ip by hostname")
+    except Exception as e:
+        logger.error("can't get ip by hostname: {}".format(e))
         return None
 
 
 def get_hostname(logger):
     try:
         platform = Platform().collect()
-        return platform.get('hostname')
+        return platform.get('nodename')
     except:
         logger.error("can't get hostname from platform ")
         return socket.gethostname()
 
 def load_runner_conf():
     runner_config_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../..', 'runner.conf'))
-    runner_config = ConfigParser.SafeConfigParser({"alertd_server_and_port": 'localhost:5001'})
+    runner_config = ConfigParser.SafeConfigParser({"alertd_server_and_port": 'http://localhost:5001'})
     runner_config.read(runner_config_path)
     return runner_config
 

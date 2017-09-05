@@ -10,6 +10,7 @@ RUN yum update -y && yum install -y \
     tar \
     wget \
     which \
+    postgresql-devel \
     zlib-devel
 
 # Clone tcollector repo from github.com

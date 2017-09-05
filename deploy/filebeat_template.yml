@@ -33,6 +33,23 @@ filebeat.prospectors:
   multiline.negate: true
   multiline.match: after
 
+- input_type: log
+
+  # Paths that should be crawled and fetched. Glob based paths.
+  paths:
+    - <basedir>/altenv/var/log/filebeat.log
+
+  document_type: filebeat
+  fields.client: <orgid>
+  fields.orgid: 2
+  fields.sysid: 15
+  fields.token: 571145dfa339dc049c7467475cf82b1b115bca00
+  fields_under_root: true
+  close_inactive: 2h
+  tail_files: true
+  multiline.pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}'
+  multiline.negate: true
+  multiline.match: after
 
 ##NEXT
 

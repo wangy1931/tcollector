@@ -11,6 +11,7 @@ RUN apt-get update -y && apt-get install -y \
     openssh-client \
     sudo \
     wget \
+    libpq-dev \
     zlib1g-dev
 
 # Clone tcollector repo from github.com
