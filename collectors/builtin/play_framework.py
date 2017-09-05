@@ -1,110 +1,120 @@
-#!/usr/bin/python
-
-import sys
 import time
-from collectors.lib import utils
-from collectors.lib.jolokia import JolokiaCollector
+import ast
+from collectors.lib.jolokia_agent_collector_base import JolokiaAgentCollectorBase
 from collectors.lib.jolokia import JolokiaParserBase
-from collectors.lib.collectorbase import MetricType
 from collectors.lib.collectorbase import CollectorBase
 
-
 class PlayFramework(CollectorBase):
+    def __init__(self, config, logger, readq):
+        super(PlayFramework, self).__init__(config, logger, readq)
+        self.play_collectors = {}
+        self.servers = ast.literal_eval(self.get_config("process_names"))
+        if self.servers is None:
+            raise LookupError("process_names must be set in collector config file")
+
+        for server in self.servers:
+            self.play_collectors[server['name']] = PlayWarper(config, logger, readq, server['process'], server['name'], int(server['port']))
+
+    def __call__(self, *args, **kwargs):
+        for process_name, warper in self.play_collectors.iteritems():
+            try:
+                self.log_info("collect for play  %s", process_name)
+                warper()
+                self._readq.nput("play.state %s %s" % (int(time.time()), '0'))
+            except Exception as e:
+                self._readq.nput("play.state %s %s" % (int(time.time()), '1'))
+                self.log_error("failed to play  collect for application %s, %s" %(process_name, e))
+
+class PlayWarper(JolokiaAgentCollectorBase):
     JMX_REQUEST_JSON = r'''[
-    
-    {
-        "type" : "read",
-        "mbean" : "java.lang:type=Memory"
-    },
-    {
+     {
         "type" : "read",
         "mbean" : "java.lang:type=Threading",
         "attribute": ["CurrentThreadCpuTime", "PeakThreadCount", "DaemonThreadCount", "TotalStartedThreadCount", "CurrentThreadUserTime", "ThreadCount"]
-    },
-    {
+     },
+     {
         "type" : "read",
-        "mbean" : "java.lang:name=PS Scavenge,type=GarbageCollector",
-        "attribute" : ["LastGcInfo", "CollectionCount", "CollectionTime"]
-    },
-    {
+        "mbean" : "java.lang:type=Threading",
+        "attribute": ["CurrentThreadCpuTime", "PeakThreadCount", "DaemonThreadCount", "TotalStartedThreadCount", "CurrentThreadUserTime", "ThreadCount"]
+     },
+     {
+      "type": "read",
+      "mbean": "java.lang:type=ClassLoading",
+      "attribute": ["LoadedClassCount","UnloadedClassCount"]
+     },
+     {
+      "type": "read",
+      "mbean": "java.lang:name=PS Scavenge,type=GarbageCollector",
+      "attribute": [
+        "LastGcInfo",
+        "CollectionCount",
+        "CollectionTime"]
+     },
+     {
         "type" : "read",
         "mbean" : "java.lang:type=OperatingSystem",
         "attribute" : ["FreePhysicalMemorySize","FreeSwapSpaceSize","AvailableProcessors","ProcessCpuLoad",
         "TotalSwapSpaceSize", "ProcessCpuTime", "SystemLoadAverage", "OpenFileDescriptorCount",
         "MaxFileDescriptorCount", "TotalPhysicalMemorySize", "CommittedVirtualMemorySize", "SystemCpuLoad"]
-    },
+     }
+     ]'''
 
-  
-  ]'''
+    CHECK_WEBLOGIC_CONSUMER_PID_INTERVAL = 300  # seconds, this is in case jolokia restart
 
-    def __init__(self, config, logger, readq):
-        super(PlayFramework, self).__init__(config, logger, readq)
-        m = sys.modules[__name__]
-        parsers_template = {        # key is the mbean name
-            "Catalina:name=\"http-bio-%(port)s\",type=GlobalRequestProcessor": "JolokiaGlobalRequestProcessorParser",
-            "java.lang:type=Memory": "JolokiaMemoryParser",
-            "Catalina:name=\"http-bio-%(port)s\",type=ThreadPool": "JolokiaThreadPoolParser",
-            "java.lang:type=Threading": "JolokiaThreadingParser",
-            "java.lang:name=PS Scavenge,type=GarbageCollector": "JolokiaGCParser",
-            "java.lang:type=OperatingSystem": "JolokiaOSParser",
+    def __init__(self, config, logger, readq, process_name, server_name, port):
+        parsers = {
+            "java.lang:type=Threading": PlayThreadStatus(logger, server_name),
+            "java.lang:type=ClassLoading": PlayClassLoader(logger, server_name),
+            "java.lang:type=Memory": PlayMemoryParser(logger, server_name),
+            "java.lang:name=PS Scavenge,type=GarbageCollector": JolokiaGCParser(logger, server_name),
+            "java.lang:type=OperatingSystem": PlayOSParser(logger,server_name),
+            }
+        super(PlayWarper, self).__init__(config, logger, readq, PlayWarper.JMX_REQUEST_JSON, parsers, process_name, PlayWarper.CHECK_WEBLOGIC_CONSUMER_PID_INTERVAL, port)
+        self.log_info("play warpper init : %s", server_name)
 
-            # "Catalina:context=*,host=*,type=Cache": "JolokiaCacheParser",
 
-        }
-        protocol = self.get_config("protocol", "http")
-        portsStr = self.get_config("ports", "8080")
-        ports = portsStr.split(",")
-
-        self.collectors = {}
-        for port in ports:
-            port = port.strip()
-            jmx_request_json = PlayFramework.JMX_REQUEST_JSON % dict(port=port)
-            parsers = {}
-            for key in parsers_template:
-                key_instanace = key % dict(port=port)
-                parsers[key_instanace] = getattr(m, parsers_template[key])(logger)
-            self.collectors[port] = JolokiaCollector(config, logger, readq, protocol, port, jmx_request_json, parsers)
-
-    def __call__(self):
-        for port in self.collectors:
-            try:
-                self.collectors[port].__call__()
-                self._readq.nput("play_framework.state %s %s %s" % (int(time.time()), '0', 'port=' + port))
-            except:
-                self._readq.nput("play_framework.state %s %s %s" % (int(time.time()), '1', 'port=' + port))
-                self.log_error("failed to collect for port %s", port)
-
-class PlayJolokiaParserBase(JolokiaParserBase):
-
-    def __init__(self,logger):
-        super(PlayJolokiaParserBase, self).__init__(logger)
-        self.additional_tags = None
-
-    def metric_name(self, name):
-        return "%s.%s" % ("play_framework", name)
-
-class JolokiaGlobalRequestProcessorParser(PlayJolokiaParserBase):
-    def __init__(self, logger):
-        super(JolokiaGlobalRequestProcessorParser, self).__init__(logger)
-        self.additional_tags = None
-        self.metrics = ["bytesSent", "bytesReceived", "processingTime", "errorCount", "maxTime", "requestCount"]
-        self.type = [MetricType.COUNTER, MetricType.COUNTER, MetricType.INC, MetricType.COUNTER, MetricType.REGULAR, MetricType.COUNTER]
+class PlayThreadStatus(JolokiaParserBase):
+    def __init__(self, logger, server_name):
+        super(PlayThreadStatus, self).__init__(logger)
+        self.metrics = ["ThreadCount", "TotalStartedThreadCount", "StandbyThreadCount"]
+        self.additional_tags = "server=%s"%server_name
 
     def valid_metrics(self):
         return self.metrics
 
     def metric_name(self, name):
-        return PlayJolokiaParserBase.metric_name(self, "%s.%s" % ("requests", name))
+        return "%s.%s"%("play.thread", name)
 
-    def get_metric_type(self, name):
-        return self.type[self.metrics.index(name)]
+class PlayOSParser(JolokiaParserBase):
+    def __init__(self, logger, server_name):
+        super(PlayOSParser, self).__init__(logger)
+        self.additional_tags = "server=%s"%server_name
 
 
-class JolokiaMemoryParser(PlayJolokiaParserBase):
-    def __init__(self, logger):
+    def valid_metrics(self):
+        return ["FreePhysicalMemorySize", "FreeSwapSpaceSize", "AvailableProcessors", "ProcessCpuLoad", "TotalSwapSpaceSize",
+                "ProcessCpuTime", "SystemLoadAverage", "OpenFileDescriptorCount", "MaxFileDescriptorCount", "TotalPhysicalMemorySize",
+                "CommittedVirtualMemorySize", "SystemCpuLoad"]
 
-        super(JolokiaMemoryParser, self).__init__(logger)
-        self.additional_tags = None
+    def metric_name(self, name):
+        return "play.os.%s"%name
+
+class PlayClassLoader(JolokiaParserBase):
+    def __init__(self, logger, server_name):
+        super(PlayClassLoader, self).__init__(logger)
+        self.metrics = ["LoadedClassCount", "UnloadedClassCount"]
+        self.additional_tags = "server=%s"%server_name
+
+    def valid_metrics(self):
+        return self.metrics
+
+    def metric_name(self, name):
+        return "%s.%s"%("play.classloader", name)
+
+class PlayMemoryParser(JolokiaParserBase):
+    def __init__(self, logger, server_name):
+        super(PlayMemoryParser, self).__init__(logger)
+        self.additional_tags = "server=%s"%server_name
 
     def metric_dict(self, json_dict):
         nonheapmem_dict = json_dict["value"]["NonHeapMemoryUsage"]
@@ -118,38 +128,16 @@ class JolokiaMemoryParser(PlayJolokiaParserBase):
                 "heap.init", "heap.used"]
 
     def metric_name(self, name):
-        return PlayJolokiaParserBase.metric_name(self, "%s.%s" % ("memory", name))
+        return  "%s.%s"%("play.memory", name)
 
-
-class JolokiaThreadPoolParser(PlayJolokiaParserBase):
-    def __init__(self, logger):
-        super(JolokiaThreadPoolParser, self).__init__(logger)
-
-
-    def valid_metrics(self):
-        return ["connectionCount", "currentThreadCount", "currentThreadsBusy", "maxThreads"]
-
-    def metric_name(self, name):
-        return PlayJolokiaParserBase.metric_name(self, "%s.%s" % ("threadpool", name))
-
-
-class JolokiaThreadingParser(PlayJolokiaParserBase):
-    def __init__(self, logger):
-        super(JolokiaThreadingParser, self).__init__(logger)
-
-    def valid_metrics(self):
-        return ["CurrentThreadCpuTime", "PeakThreadCount", "DaemonThreadCount", "TotalStartedThreadCount", "CurrentThreadUserTime", "ThreadCount"]
-
-    def metric_name(self, name):
-        return PlayJolokiaParserBase.metric_name(self, "%s.%s" % ("threading", name))
-
-
-class JolokiaGCParser(PlayJolokiaParserBase):
-    def __init__(self, logger):
+class JolokiaGCParser(JolokiaParserBase):
+    def __init__(self, logger, server_name):
+        self.additional_tags = "server=%s"%server_name
         super(JolokiaGCParser, self).__init__(logger)
 
     def metric_dict(self, json_dict):
         metrics_dict = {}
+
         survivorspace_dict = json_dict["value"]["LastGcInfo"]["memoryUsageAfterGc"]["PS Survivor Space"]
         metrics_dict.update({"survivorspace." + key: survivorspace_dict[key] for key in survivorspace_dict.keys()})
 
@@ -161,10 +149,6 @@ class JolokiaGCParser(PlayJolokiaParserBase):
 
         codecache_dict = json_dict["value"]["LastGcInfo"]["memoryUsageAfterGc"]["Code Cache"]
         metrics_dict.update({"codecache." + key: codecache_dict[key] for key in codecache_dict.keys()})
-
-        # permgen_dict = json_dict["value"]["LastGcInfo"]["memoryUsageAfterGc"]["PS Perm Gen"]
-        # metrics_dict.update({"permgen." + key: permgen_dict[key] for key in permgen_dict.keys()})
-
         metrics_dict.update({"GcThreadCount": json_dict["value"]["LastGcInfo"]["GcThreadCount"]})
         metrics_dict.update({"CollectionCount": json_dict["value"]["CollectionCount"]})
         metrics_dict.update({"CollectionTime": json_dict["value"]["CollectionTime"]})
@@ -176,94 +160,7 @@ class JolokiaGCParser(PlayJolokiaParserBase):
                 "survivorspace.max", "survivorspace.committed", "survivorspace.init", "survivorspace.used",
                 "edenspace.max", "edenspace.committed", "edenspace.init", "edenspace.used",
                 "oldgen.max", "oldgen.committed", "oldgen.init", "oldgen.used",
-                "codecache.max", "codecache.committed", "codecache.init", "codecache.used",
-                "permgen.max", "permgen.committed", "permgen.init", "permgen.used"]
+                "codecache.max", "codecache.committed", "codecache.init", "codecache.used"]
 
     def metric_name(self, name):
-        return PlayJolokiaParserBase.metric_name(self, "%s.%s" % ("scavenge.gc", name))
-
-
-class JolokiaOSParser(PlayJolokiaParserBase):
-    def __init__(self, logger):
-        super(JolokiaOSParser, self).__init__(logger)
-
-
-    def valid_metrics(self):
-        return ["FreePhysicalMemorySize", "FreeSwapSpaceSize", "AvailableProcessors", "ProcessCpuLoad", "TotalSwapSpaceSize",
-                "ProcessCpuTime", "SystemLoadAverage", "OpenFileDescriptorCount", "MaxFileDescriptorCount", "TotalPhysicalMemorySize",
-                "CommittedVirtualMemorySize", "SystemCpuLoad"]
-
-    def metric_name(self, name):
-        return PlayJolokiaParserBase.metric_name(self, "%s.%s" % ("os", name))
-
-
-class JolokiaWebModuleParser(PlayJolokiaParserBase):
-    def __init__(self, logger):
-        super(JolokiaWebModuleParser, self).__init__(logger)
-        self.additional_tags =None
-        self.reserved_modules = ["jolokia", "manager", "examples", "docs", "host-manager"]
-
-    def metric_name(self, name):
-        return "%s.%s" % ("play_framework", name)
-    def parse(self, json_dict, readq, port):
-        status = json_dict["status"]
-        if status != 200:
-            raise IOError("status code %d" % status)
-        ts = json_dict["timestamp"]
-        vals = json_dict["value"]
-        for mbean_name_str, val in vals.iteritems():   # iterate over all the values returned and apply filter
-            try:
-                mbean_name_str.index("Catalina:")
-                mbean_name_str = mbean_name_str[len("Catalina:"):]
-            except ValueError:
-                pass
-
-            additional_tag = ""
-            reserved = False
-            for mbean_part in mbean_name_str.split(","):    # iterate over mbean name like Catalina:J2EEApplication=none,J2EEServer=none,WebModule=*,name=jsp,type=JspMonitor
-                mbean_part_name_val_pair = mbean_part.split("=")
-                if mbean_part_name_val_pair[0] == "WebModule" or mbean_part_name_val_pair[0] == "context":
-                    additional_tag += (" %s=%s" % (mbean_part_name_val_pair[0], utils.remove_invalid_characters(mbean_part_name_val_pair[1])))
-                    for reserved_module in self.reserved_modules:
-                        if mbean_part_name_val_pair[1].endswith(reserved_module):
-                            reserved = True
-                            break
-                elif mbean_part_name_val_pair[0] == "name":
-                    additional_tag += (" %s=%s" % (mbean_part_name_val_pair[0], utils.remove_invalid_characters(mbean_part_name_val_pair[1])))
-
-            if not reserved:
-                self._process(readq, port, ts, val, additional_tag)
-
-
-class JolokiaCacheParser(JolokiaWebModuleParser):
-    def __init__(self, logger):
-        super(JolokiaCacheParser, self).__init__(logger)
-        self.metrics = ["accessCount", "hitsCount"]
-
-    def valid_metrics(self):
-        return self.metrics
-
-    def metric_name(self, name):
-        return PlayJolokiaParserBase.metric_name(self, "%s.%s" % ("cache", name))
-
-    def get_metric_type(self, name):
-        return MetricType.COUNTER
-
-
-class JolokiaJspMonitorParser(JolokiaWebModuleParser):
-    def __init__(self, logger):
-        super(JolokiaJspMonitorParser, self).__init__(logger)
-        self.metrics = ["jspUnloadCount", "jspCount", "jspReloadCount", "jspQueueLength"]
-        self.type = [MetricType.COUNTER, MetricType.COUNTER, MetricType.COUNTER, MetricType.REGULAR]
-
-    def valid_metrics(self):
-        return self.metrics
-
-    def metric_name(self, name):
-        return PlayJolokiaParserBase.metric_name(self, "%s.%s" % ("jsp", name))
-
-    def get_metric_type(self, name):
-        return self.type[self.metrics.index(name)]
-
-
-
+        return "%s.%s"%("play.scavenge.gc", name)
