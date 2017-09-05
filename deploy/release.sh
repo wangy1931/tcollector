@@ -4,6 +4,7 @@ current_time=$(date "+%Y.%m.%d-%H.%M.%S")
 source common.sh
 OS=$(get_os)
 version=$1
+
 pushd /root/src/tcollector/deploy
 sudo ./build.sh -h /root/src/tcollector/
 popd
