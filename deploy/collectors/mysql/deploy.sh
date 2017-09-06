@@ -73,6 +73,7 @@ if [ ! -f "$mysql_conf_file" ]; then
 fi
 
 command -v mysql > /dev/null 2>&1 || { echo >&2 "mysql command does not exist.  Aborting."; exit 1; }
+mysql -u "$mysql_priv_user" -p -e "CREATE USER '${mysql_stats_user}'@'localhost' IDENTIFIED BY '${mysql_stats_pass}'"
 log_info "CREATE USER '${mysql_stats_user}'@'localhost' IDENTIFIED BY '${mysql_stats_pass}'"
 log_info "type in password for mysql user $mysql_priv_user"
 mysql -u "$mysql_priv_user" -p -e "GRANT USAGE ON *.* TO '${mysql_stats_user}'@'localhost'; DROP USER '${mysql_stats_user}'@'localhost'; GRANT PROCESS, REPLICATION CLIENT ON *.* TO '${mysql_stats_user}'@'localhost' IDENTIFIED BY '${mysql_stats_pass}'"
