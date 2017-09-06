@@ -19,10 +19,7 @@ lib_folder="${agent_collector_folder}/lib"
 local_config_folder="${agent_collector_folder}/local_config"
 snmp_folder="${agent_install_folder}/snmp"
 publish_location="./releases"
-python_workspace_folder="/python${workspace_folder}"
-python_altenv_folder="/python${altenv_folder}"
-openssl_workspace_folder="/openssl${workspace_folder}"
-openssl_altenv_ssl_folder="/openssl${altenv_ssl_folder}"
+tmp_python_ssl="/tmp_python_ssl"
 function display_usage() {
  log_info "$0 [-c] [-s] [-h] <path/to/tcollector/root>"
 }
@@ -33,7 +30,7 @@ function fix_python_recursively() {
       fix_python_recursively "$i"
     elif [[ ${i: -3} == ".py" ]]; then
       sed -i "s/\#\!.*/\#\!${agent_install_python_escaped}/g" "$i"
-    fi  
+    fi
   done
 }
 
@@ -46,77 +43,12 @@ function _md5() {
     echo >&2 "switch md5 to publish md5 key"
   fi
 }
-
-function install_python(){
-  log_info 'setup python environment'
-  if [ ! -d ${python_workspace_folder}  ];then
-      mkdir -p ${python_workspace_folder}
-      mkdir -p ${python_altenv_folder}
-      if [[ ! -f ${python_workspace_folder}/Python-2.7.11.tgz ]]; then
-        log_info 'download python-2.7.11 package'
-        wget --directory-prefix="${python_workspace_folder}" https://download.cloudwiz.cn/package/Python-2.7.11.tgz
-        abort_if_failed 'failed to download python-2.7.11 package'
-      fi
-      rm -rf "${python_workspace_folder}"/Python-2.7.11
-      abort_if_failed "failed to remove folder ${python_workspace_folder}/Python-2.7.11"
-      tar -xzf "${python_workspace_folder}"/Python-2.7.11.tgz -C "${python_workspace_folder}"
-      abort_if_failed 'failed to extract python-2.7.11 tarball'
-
-      pushd "${python_workspace_folder}"/Python-2.7.11
-      sed -i "s/^#_socket /_socket /" Modules/Setup.dist
-      abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 0"
-      sed -i "s/^#SSL=/SSL=${python_altenv_folder//\//\\/}/" Modules/Setup.dist
-      abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 1"
-      sed -i "s/^#_ssl _ssl/_ssl _ssl/" Modules/Setup.dist
-      abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 2"
-      sed -i "s/^#\t-DUSE_SSL/\t-DUSE_SSL/" Modules/Setup.dist
-      abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 3"
-      sed -i "s/^#\t-L\$(SSL)/\t-L\$(SSL)/" Modules/Setup.dist
-      abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 4"
-      ./configure --prefix="${python_altenv_folder}"
-      abort_if_failed 'python build: failed to run configure'
-      make install
-      abort_if_failed 'python build: failed to run make'
-      popd
+function save_python_and_ssl(){
+  if [-d ${tmp_python_ssl} ];then
+     mkdir -p ${tmp_python_ssl}
+     cp -r -f ${agent_install_folder} ${tmp_python_ssl}
   fi
-  log_info "cp -r -f ${python_workspace_folder} ${workspace_folder}"
-  cp -r -f ${python_workspace_folder} ${workspace_folder}
-
-  log_info "cp -r -f ${python_altenv_folder} ${altenv_folder}"
-  cp -r -f ${python_altenv_folder} ${altenv_folder}
-  log_info 'finish building python-2.7.11'
 }
-function isntall_openssl(){
-   log_info 'build openssl...'
-   if [ ! -d ${openssl_workspace_folder} ];then
-      mkdir -p ${openssl_workspace_folder}
-      mkdir -p ${openssl_altenv_folder}
-
-      if [ ! -f ${openssl_workspace_folder}/openssl-1.0.2j.tar.gz ]; then
-        log_info 'download openssl-1.0.2j package'
-        wget --directory-prefix="${openssl_workspace_folder}" https://download.cloudwiz.cn/package/openssl-1.0.2j.tar.gz
-        abort_if_failed 'failed to download openssl-1.0.2j package'
-      fi
-      tar -xzf "${openssl_workspace_folder}"/openssl-1.0.2j.tar.gz -C "${openssl_workspace_folder}"
-      abort_if_failed 'failed to extract openssl-1.0.2j tarball'
-
-      pushd "${openssl_workspace_folder}"/openssl-1.0.2j
-      ./config --prefix="${openssl_altenv_ssl_folder}" --openssldir="${openssl_altenv_ssl_folder}"
-      abort_if_failed 'openssl build: failed to run configure'
-      make
-      abort_if_failed 'openssl build: failed to run make'
-      make install
-      abort_if_failed 'openssl build: failed to run make install'
-      popd
-   fi
-      log_info "cp -r -f ${openssl_workspace_folder} ${workspace_folder}"
-      cp -r -f ${python_workspace_folder} ${workspace_folder}
-
-      log_info "cp -r -f ${openssl_altenv_ssl_folder} ${altenv_ssl_folder}"
-      cp -r -f ${python_altenv_folder} ${altenv_folder}
-    log_info 'finish building openssl-1.0.2j'
-}
-
 os_type=$(get_os)
 bitness=$(uname -m)
 
@@ -155,18 +87,72 @@ if [[ "$clean" = true ]]; then
 fi
 
 if [[ ! "$skip" = true ]]; then
-  log_info "recreate ${agent_install_folder}"
-  rm -rf ${agent_install_folder}
-  abort_if_failed "failed to delete ${agent_install_folder}"
-  mkdir -p "${agent_collector_folder}"
-  mkdir -p "${workspace_folder}"
-  mkdir -p "${altenv_etc_folder}"
-  mkdir -p "${altenv_run_folder}"
-  mkdir -p "${altenv_log_folder}"
+  if [ ! -d ${tmp_python_ssl} ] ;then
+      log_info "recreate ${agent_install_folder}"
+      rm -rf ${agent_install_folder}
+      abort_if_failed "failed to delete ${agent_install_folder}"
+      mkdir -p "${agent_collector_folder}"
+      mkdir -p "${workspace_folder}"
+      mkdir -p "${altenv_etc_folder}"
+      mkdir -p "${altenv_run_folder}"
+      mkdir -p "${altenv_log_folder}"
 
-  isntall_openssl
-  install_python
+      log_info 'build openssl...'
+      if [[ ! -f ${workspace_folder}/openssl-1.0.2j.tar.gz ]]; then
+        log_info 'download openssl-1.0.2j package'
+        wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/openssl-1.0.2j.tar.gz
+        abort_if_failed 'failed to download openssl-1.0.2j package'
+      fi
+      tar -xzf "${workspace_folder}"/openssl-1.0.2j.tar.gz -C "${workspace_folder}"
+      abort_if_failed 'failed to extract openssl-1.0.2j tarball'
 
+      pushd "${workspace_folder}"/openssl-1.0.2j
+      ./config --prefix="${altenv_ssl_folder}" --openssldir="${altenv_ssl_folder}"
+      abort_if_failed 'openssl build: failed to run configure'
+      make
+      abort_if_failed 'openssl build: failed to run make'
+      make install
+      abort_if_failed 'openssl build: failed to run make install'
+      popd
+      log_info 'finish building openssl-1.0.2j'
+
+      log_info 'setup python environment'
+      if [[ ! -f ${workspace_folder}/Python-2.7.11.tgz ]]; then
+        log_info 'download python-2.7.11 package'
+        wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/Python-2.7.11.tgz
+        abort_if_failed 'failed to download python-2.7.11 package'
+      fi
+      rm -rf "${workspace_folder}"/Python-2.7.11
+      abort_if_failed "failed to remove folder ${workspace_folder}/Python-2.7.11"
+      tar -xzf "${workspace_folder}"/Python-2.7.11.tgz -C "${workspace_folder}"
+      abort_if_failed 'failed to extract python-2.7.11 tarball'
+
+      pushd "${workspace_folder}"/Python-2.7.11
+      sed -i "s/^#_socket /_socket /" Modules/Setup.dist
+      abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 0"
+      sed -i "s/^#SSL=/SSL=${altenv_folder//\//\\/}/" Modules/Setup.dist
+      abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 1"
+      sed -i "s/^#_ssl _ssl/_ssl _ssl/" Modules/Setup.dist
+      abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 2"
+      sed -i "s/^#\t-DUSE_SSL/\t-DUSE_SSL/" Modules/Setup.dist
+      abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 3"
+      sed -i "s/^#\t-L\$(SSL)/\t-L\$(SSL)/" Modules/Setup.dist
+      abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 4"
+      ./configure --prefix="${altenv_folder}"
+      abort_if_failed 'python build: failed to run configure'
+      make install
+      abort_if_failed 'python build: failed to run make'
+      popd
+      log_info 'finish building python-2.7.11'
+  else
+      log_info "recreate ${agent_install_folder}"
+      rm -rf ${agent_install_folder}
+      abort_if_failed "failed to delete ${agent_install_folder}"
+      mkdir -p "${agent_collector_folder}"
+      log_info " cp -r -f ${tmp_python_ssl}  ${agent_install_folder}"
+      cp -r -f ${tmp_python_ssl}  ${agent_install_folder}
+
+  fi
   log_info 'setup supervisord and its dependencies ...'
   log_info 'set up setuptools ...'
   if [[ ! -f ${workspace_folder}/setuptools-20.2.2.tar.gz ]]; then
