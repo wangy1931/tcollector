@@ -174,13 +174,13 @@ if [[ ! "$skip" = true ]]; then
   abort_if_failed 'failed to pip install packages'
   #ssdb.py is not install using pip
    log_info 'set up spp-0.0.7.tar.gz ...'
-  if [[ ! -f ${workspace_folder}/ssdb.py-0.1.8.tar.gz ]]; then
+  if [[ ! -f ${workspace_folder}/spp-0.0.7.tar.gz ]]; then
     log_info 'download spp-0.0.7 tarball'
     wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/spp-0.0.7.tar.gz
     abort_if_failed 'failed to download spp-0.0.7'
   fi
   tar -xzf "${workspace_folder}"/spp-0.0.7.tar.gz -C "${workspace_folder}"
-  abort_if_failed 'failed to extract setuptools tarball'
+  abort_if_failed 'failed to extract spp-0.0.7 tarball'
 
   pushd "${workspace_folder}"/spp-0.0.7.tar.gz
   "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
