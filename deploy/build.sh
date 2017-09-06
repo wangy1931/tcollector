@@ -44,7 +44,7 @@ function _md5() {
   fi
 }
 function save_python_and_ssl(){
-     mkdir -p ${tmp_python_ssl}
+     mkdir -p "${tmp_python_ssl}"
      cp -r -f ${agent_install_folder} ${tmp_python_ssl}
 }
 os_type=$(get_os)
