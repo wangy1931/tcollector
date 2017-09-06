@@ -44,10 +44,8 @@ function _md5() {
   fi
 }
 function save_python_and_ssl(){
-  if [-d ${tmp_python_ssl} ];then
      mkdir -p ${tmp_python_ssl}
      cp -r -f ${agent_install_folder} ${tmp_python_ssl}
-  fi
 }
 os_type=$(get_os)
 bitness=$(uname -m)
@@ -144,6 +142,7 @@ if [[ ! "$skip" = true ]]; then
       abort_if_failed 'python build: failed to run make'
       popd
       log_info 'finish building python-2.7.11'
+      save_python_and_ssl
   else
       log_info "recreate ${agent_install_folder}"
       rm -rf ${agent_install_folder}
@@ -153,7 +152,7 @@ if [[ ! "$skip" = true ]]; then
       cp -r -f ${tmp_python_ssl}  ${agent_install_folder}
 
   fi
-  save_python_and_ssl
+
   log_info 'setup supervisord and its dependencies ...'
   log_info 'set up setuptools ...'
   if [[ ! -f ${workspace_folder}/setuptools-20.2.2.tar.gz ]]; then
