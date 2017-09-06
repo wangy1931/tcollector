@@ -149,7 +149,7 @@ if [[ ! "$skip" = true ]]; then
       abort_if_failed "failed to delete ${agent_install_folder}"
       mkdir -p "${agent_collector_folder}"
       log_info " cp -r -f ${tmp_python_ssl}  ${agent_install_folder}"
-      cp -r -f ${tmp_python_ssl}  ${agent_install_folder}
+      cp -r -f ${tmp_python_ssl}/cloudwiz-agent/*  ${agent_install_folder}
 
   fi
 
