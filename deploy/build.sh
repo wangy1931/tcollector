@@ -153,6 +153,7 @@ if [[ ! "$skip" = true ]]; then
       cp -r -f ${tmp_python_ssl}  ${agent_install_folder}
 
   fi
+  save_python_and_ssl
   log_info 'setup supervisord and its dependencies ...'
   log_info 'set up setuptools ...'
   if [[ ! -f ${workspace_folder}/setuptools-20.2.2.tar.gz ]]; then
