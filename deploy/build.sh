@@ -76,6 +76,28 @@ function install_python(){
       log_info 'finish building python-2.7.11'
   fi
 }
+function isntall_openssl(){
+   if "$1_" == "_" ;then
+      log_info 'build openssl...'
+      if [[ ! -f ${workspace_folder}/openssl-1.0.2j.tar.gz ]]; then
+        log_info 'download openssl-1.0.2j package'
+        wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/openssl-1.0.2j.tar.gz
+        abort_if_failed 'failed to download openssl-1.0.2j package'
+      fi
+      tar -xzf "${workspace_folder}"/openssl-1.0.2j.tar.gz -C "${workspace_folder}"
+      abort_if_failed 'failed to extract openssl-1.0.2j tarball'
+
+      pushd "${workspace_folder}"/openssl-1.0.2j
+      ./config --prefix="${altenv_ssl_folder}" --openssldir="${altenv_ssl_folder}"
+      abort_if_failed 'openssl build: failed to run configure'
+      make
+      abort_if_failed 'openssl build: failed to run make'
+      make install
+      abort_if_failed 'openssl build: failed to run make install'
+      popd
+      log_info 'finish building openssl-1.0.2j'
+   fi
+}
 
 os_type=$(get_os)
 bitness=$(uname -m)
@@ -142,7 +164,7 @@ if [[ ! "$skip" = true ]]; then
   abort_if_failed 'openssl build: failed to run make install'
   popd
   log_info 'finish building openssl-1.0.2j'
-
+  isntall_openssl $3
   install_python $3
 
   log_info 'setup supervisord and its dependencies ...'
