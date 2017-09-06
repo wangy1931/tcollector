@@ -6,7 +6,7 @@ OS=$(get_os)
 version=$1
 
 pushd /root/src/tcollector/deploy
-sudo ./build.sh -h /root/src/tcollector/ $2
+sudo ./build.sh -h /root/src/tcollector/
 popd
 
 scp -r /tmp/publish/${OS} root@172.17.0.1:/data/workspace/tcollector/release/${OS}-${version}-$current_time
