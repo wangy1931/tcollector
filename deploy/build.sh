@@ -172,6 +172,23 @@ if [[ ! "$skip" = true ]]; then
   log_info 'pip install packages'
   "${altenv_bin_folder}"/easy_install -i http://mirrors.aliyun.com/pypi/simple --prefix="${altenv_folder}" `cat requirement.txt`
   abort_if_failed 'failed to pip install packages'
+  #ssdb.py is not install using pip
+  log_info 'set up ssdb.py ...'
+  if [[ ! -f ${workspace_folder}/ssdb.py-0.1.8.tar.gz ]]; then
+    log_info 'download ssdb.py-0.1.8 tarball'
+    wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/ssdb.py-0.1.8.tar.gz
+    abort_if_failed 'failed to download ssdb.py-0.1.8'
+  fi
+  tar -xzf "${workspace_folder}"/ssdb.py-0.1.8.tar.gz -C "${workspace_folder}"
+  abort_if_failed 'failed to extract setuptools tarball'
+
+  pushd "${workspace_folder}"/ssdb.py-0.1.8
+  "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
+  abort_if_failed 'failed to install ssdb.py-0.1.8'
+  popd
+  log_info 'finish setting up ssdb.py-0.1.8'
+
+
 
   yes | cp -f "${basedir}/supervisord.conf" "${altenv_etc_folder}/supervisord.conf"
   abort_if_failed "failed to copy supervisord conf file"
