@@ -45,7 +45,7 @@ function _md5() {
 }
 
 function install_python(){
-  if "$1_"=="_" ;then
+  if [ "$1_"=="_" ];then
       log_info 'setup python environment'
       if [[ ! -f ${workspace_folder}/Python-2.7.11.tgz ]]; then
         log_info 'download python-2.7.11 package'
@@ -77,7 +77,7 @@ function install_python(){
   fi
 }
 function isntall_openssl(){
-   if "$1_" == "_" ;then
+   if [ "$1_" == "_" ];then
       log_info 'build openssl...'
       if [[ ! -f ${workspace_folder}/openssl-1.0.2j.tar.gz ]]; then
         log_info 'download openssl-1.0.2j package'
