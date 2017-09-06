@@ -182,7 +182,7 @@ if [[ ! "$skip" = true ]]; then
   tar -xzf "${workspace_folder}"/spp-0.0.7.tar.gz -C "${workspace_folder}"
   abort_if_failed 'failed to extract spp-0.0.7 tarball'
 
-  pushd "${workspace_folder}"/spp-0.0.7.tar.gz
+  pushd "${workspace_folder}"/spp-0.0.7
   "${altenv_bin_folder}"/python setup.py install --prefix="${altenv_folder}"
   abort_if_failed 'failed to install spp-0.0.7'
   popd
