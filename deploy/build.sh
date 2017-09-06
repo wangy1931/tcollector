@@ -44,6 +44,39 @@ function _md5() {
   fi
 }
 
+function install_python(){
+  if "$1_"=="_" ;then
+      log_info 'setup python environment'
+      if [[ ! -f ${workspace_folder}/Python-2.7.11.tgz ]]; then
+        log_info 'download python-2.7.11 package'
+        wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/Python-2.7.11.tgz
+        abort_if_failed 'failed to download python-2.7.11 package'
+      fi
+      rm -rf "${workspace_folder}"/Python-2.7.11
+      abort_if_failed "failed to remove folder ${workspace_folder}/Python-2.7.11"
+      tar -xzf "${workspace_folder}"/Python-2.7.11.tgz -C "${workspace_folder}"
+      abort_if_failed 'failed to extract python-2.7.11 tarball'
+
+      pushd "${workspace_folder}"/Python-2.7.11
+      sed -i "s/^#_socket /_socket /" Modules/Setup.dist
+      abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 0"
+      sed -i "s/^#SSL=/SSL=${altenv_folder//\//\\/}/" Modules/Setup.dist
+      abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 1"
+      sed -i "s/^#_ssl _ssl/_ssl _ssl/" Modules/Setup.dist
+      abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 2"
+      sed -i "s/^#\t-DUSE_SSL/\t-DUSE_SSL/" Modules/Setup.dist
+      abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 3"
+      sed -i "s/^#\t-L\$(SSL)/\t-L\$(SSL)/" Modules/Setup.dist
+      abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 4"
+      ./configure --prefix="${altenv_folder}"
+      abort_if_failed 'python build: failed to run configure'
+      make install
+      abort_if_failed 'python build: failed to run make'
+      popd
+      log_info 'finish building python-2.7.11'
+  fi
+}
+
 os_type=$(get_os)
 bitness=$(uname -m)
 
@@ -110,34 +143,7 @@ if [[ ! "$skip" = true ]]; then
   popd
   log_info 'finish building openssl-1.0.2j'
 
-  log_info 'setup python environment'
-  if [[ ! -f ${workspace_folder}/Python-2.7.11.tgz ]]; then
-    log_info 'download python-2.7.11 package'
-    wget --directory-prefix="${workspace_folder}" https://download.cloudwiz.cn/package/Python-2.7.11.tgz
-    abort_if_failed 'failed to download python-2.7.11 package'
-  fi
-  rm -rf "${workspace_folder}"/Python-2.7.11
-  abort_if_failed "failed to remove folder ${workspace_folder}/Python-2.7.11"
-  tar -xzf "${workspace_folder}"/Python-2.7.11.tgz -C "${workspace_folder}"
-  abort_if_failed 'failed to extract python-2.7.11 tarball'
-
-  pushd "${workspace_folder}"/Python-2.7.11
-  sed -i "s/^#_socket /_socket /" Modules/Setup.dist
-  abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 0"
-  sed -i "s/^#SSL=/SSL=${altenv_folder//\//\\/}/" Modules/Setup.dist
-  abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 1"
-  sed -i "s/^#_ssl _ssl/_ssl _ssl/" Modules/Setup.dist
-  abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 2"
-  sed -i "s/^#\t-DUSE_SSL/\t-DUSE_SSL/" Modules/Setup.dist
-  abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 3"
-  sed -i "s/^#\t-L\$(SSL)/\t-L\$(SSL)/" Modules/Setup.dist
-  abort_if_failed "failed to update Modules/Setup.dist to uncomment SSL 4"
-  ./configure --prefix="${altenv_folder}"
-  abort_if_failed 'python build: failed to run configure'
-  make install
-  abort_if_failed 'python build: failed to run make'
-  popd
-  log_info 'finish building python-2.7.11'
+  install_python $3
 
   log_info 'setup supervisord and its dependencies ...'
   log_info 'set up setuptools ...'
